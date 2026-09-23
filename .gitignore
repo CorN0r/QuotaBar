@@ -1,0 +1,30 @@
+# ---- 构建与打包产物（本地保留，不入库）----
+/build/
+/dist/
+/build-cmake/
+/release/
+
+# 本地会话工具
+/.zcode/
+
+# ---- 编译产物（含 experiments 探针二进制）----
+*.obj
+*.exe
+*.res
+*.log
+
+# ---- 历史发行包 / 图标迭代史 / 图标包（保留本地，不入库）----
+*.zip
+/assets/branding/exploration-v2/
+/assets/branding/exploration-v3/
+
+# 非 QuotaBar 的设计参考资料
+/design/reference/
+
+# ---- 系统杂项 ----
+Thumbs.db
+desktop.ini
+
+# ---- 真机截图（含真实余额与桌面环境，仅本地保留）----
+experiments/taskbar_probe/*.png
+experiments/slot_probe/slot_zoom.png

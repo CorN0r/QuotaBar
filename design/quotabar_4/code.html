@@ -1,0 +1,566 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error": "#ffb4ab",
+          "surface": "#10141a",
+          "on-tertiary": "#472a00",
+          "surface-bright": "#353940",
+          "inverse-surface": "#dfe2eb",
+          "secondary-fixed-dim": "#4edea3",
+          "background": "#10141a",
+          "on-primary-fixed-variant": "#004395",
+          "outline-variant": "#424754",
+          "tertiary-fixed": "#ffddb8",
+          "on-secondary-container": "#00311f",
+          "outline": "#8c909f",
+          "on-secondary-fixed-variant": "#005236",
+          "on-secondary": "#003824",
+          "on-secondary-fixed": "#002113",
+          "secondary": "#4edea3",
+          "on-tertiary-fixed-variant": "#653e00",
+          "error-container": "#93000a",
+          "on-primary-fixed": "#001a42",
+          "primary": "#adc6ff",
+          "surface-variant": "#31353c",
+          "inverse-primary": "#005ac2",
+          "on-surface-variant": "#c2c6d6",
+          "surface-dim": "#10141a",
+          "primary-fixed-dim": "#adc6ff",
+          "tertiary": "#ffb95f",
+          "on-background": "#dfe2eb",
+          "surface-container-highest": "#31353c",
+          "surface-tint": "#adc6ff",
+          "surface-container-low": "#181c22",
+          "tertiary-container": "#ca8100",
+          "primary-container": "#4d8eff",
+          "secondary-container": "#00a572",
+          "on-primary-container": "#00285d",
+          "secondary-fixed": "#6ffbbe",
+          "on-surface": "#dfe2eb",
+          "on-error-container": "#ffdad6",
+          "on-primary": "#002e6a",
+          "surface-container-lowest": "#0a0e14",
+          "on-tertiary-fixed": "#2a1700",
+          "on-error": "#690005",
+          "surface-container-high": "#262a31",
+          "surface-container": "#1c2026",
+          "inverse-on-surface": "#2d3137",
+          "on-tertiary-container": "#3e2400",
+          "tertiary-fixed-dim": "#ffb95f",
+          "primary-fixed": "#d8e2ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "space-sm": "0.5rem",
+          "space-xs": "0.25rem",
+          "space-lg": "1.25rem",
+          "space-md": "0.875rem",
+          "margin": "1.25rem",
+          "space-xl": "1.75rem"
+        },
+        "fontFamily": {
+          "body-sm": [
+            "Inter"
+          ],
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "label-caps": [
+            "Plus Jakarta Sans"
+          ],
+          "label-numeric": [
+            "JetBrains Mono"
+          ],
+          "label-code": [
+            "JetBrains Mono"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-sm": [
+            "15px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-caps": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-numeric": [
+            "18px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-code": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-background font-body-md text-on-surface select-none antialiased min-h-screen"><header class="fixed top-0 left-0 w-full h-14 bg-surface-container-lowest/90 backdrop-blur-xl z-50 flex items-center justify-between px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.35)]"><div class="flex items-center gap-space-md"><img alt="QuotaBar Logo" class="h-8 w-auto object-contain rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSKFIkdGqkF8ErcgWS3vo51igDTRYKz0uuFB9YVTTVHw7BFtteXPvancbvf-2JdUyGinWGs8udYu4-goPfE955-u2yr5njbB3u8OkAmcBjA6BAFb4jPs58vBdi-aQVgnfQ1gtJYK2whEasKYB6duIEuBDr_AZHVNcjv1ZCqS7vAhdxXvs5bTJWeRkX67kDggwK-GKv4xsfUfL867_WxUbabzvbUoPFKlzAVrjL-c2TdM2BjTcZpvEjMQ"><div class="flex items-center gap-space-sm"><span class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">QuotaBar</span><span class="px-space-xs py-0.5 rounded bg-surface-container-high text-primary font-label-caps text-label-caps uppercase tracking-wider font-semibold">v2.4 Pro</span><span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container/40 text-secondary font-label-caps text-label-caps"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>守护常驻中</span></div></div><div class="flex items-center gap-space-sm"><button class="flex items-center gap-1 px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors font-body-sm text-body-sm" title="立即同步额度"><span class="material-symbols-outlined text-[16px]">sync</span><span>刷新</span></button><div class="h-4 w-[1px] bg-outline-variant/40 mx-1"></div><div class="flex items-center gap-1"><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最小化"><span class="material-symbols-outlined text-[18px]">minimize</span></button><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最大化"><span class="material-symbols-outlined text-[18px]">crop_square</span></button><button class="p-1.5 rounded hover:bg-error-container hover:text-on-error transition-colors text-on-surface-variant" title="关闭到托盘"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 bg-surface-container-low/95 backdrop-blur-md z-40 flex flex-col justify-between p-space-sm shadow-[1px_0_12px_rgba(0,0,0,0.25)]"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-space-xs font-label-caps text-label-caps uppercase tracking-wider text-outline">监控核心</div><nav class="flex flex-col gap-1" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="quota-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">donut_large</span><span>额度详情</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]" data-path="position-adjustment" href="#"><span class="material-symbols-outlined text-[18px]">dock_to_right</span><span>调整位置</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="display-monitoring" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>显示设置</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="account-api-keys" href="#"><span class="material-symbols-outlined text-[18px]">vpn_key</span><span>账户设置</span></a></nav></div><div class="p-space-sm rounded-lg bg-surface-container/60 flex flex-col gap-space-xs"><div class="flex items-center justify-between font-label-caps text-label-caps text-outline"><span>系统遥测</span><span class="inline-flex items-center gap-1 text-secondary font-label-code text-label-code"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>已连接</span></div><div class="flex flex-col font-label-code text-label-code text-on-surface-variant/80"><span class="text-[11px]">自动同步: 30s 周期</span><span class="text-[11px] text-outline">上次刷新 14:02:18</span></div></div></aside><div class="pl-56"><main class="relative pt-14 min-h-screen w-full bg-background"><div class="flex flex-col w-full p-space-lg gap-space-lg">
+<!-- 顶部状态栏与副标题区 -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-sm pb-space-sm border-none">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="px-space-xs py-0.5 rounded bg-primary-container/20 text-primary font-label-caps text-label-caps tracking-wider uppercase font-semibold">Windows 11 Mica Docking Engine</span>
+<span class="inline-flex items-center gap-1 text-secondary font-label-code text-label-code">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-ping"></span>
+          注入就绪
+        </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-bold tracking-tight">调整位置</h1>
+<p class="font-body-md text-body-md text-outline">常驻嵌入条在系统任务栏上的水平对齐与间距校准，精细至单像素微米级定位</p>
+</div>
+<!-- 实时写入确认卡片 -->
+<div class="flex items-center gap-3 px-space-md py-2 rounded-xl bg-surface-container-high/60 backdrop-blur-md shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-secondary/15 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-on-surface font-semibold">即时生效机制</span>
+<span class="font-label-code text-label-code text-outline text-[11px]">已写入 config.mica.json</span>
+</div>
+<div class="h-6 w-[1px] bg-outline-variant/30 mx-1"></div>
+<button class="p-1.5 rounded hover:bg-surface-variant text-on-surface-variant hover:text-on-surface transition-colors" id="toggle-taskbar-pin" title="测试闪烁定位">
+<span class="material-symbols-outlined text-[18px]">screen_search_desktop</span>
+</button>
+</div>
+</div>
+<!-- 主控制与模拟区 (双列响应式) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- 左侧：交互式位置微调控制台 (5列) -->
+<div class="xl:col-span-5 flex flex-col gap-space-md">
+<!-- 核心控制卡片 -->
+<div class="rounded-xl bg-surface-container-low/90 backdrop-blur-xl p-space-lg shadow-xl flex flex-col gap-space-md relative overflow-hidden">
+<div class="absolute -right-12 -top-12 w-36 h-36 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">dock_to_right</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">嵌入条水平位置</h2>
+</div>
+<span class="font-label-caps text-label-caps text-outline bg-surface-container px-2 py-0.5 rounded">基准点: 天气组件右侧</span>
+</div>
+<!-- 巨幅数值可视化 -->
+<div class="flex flex-col items-center justify-center p-space-lg rounded-xl bg-surface-container-lowest/80 relative">
+<span class="font-label-caps text-label-caps uppercase text-outline tracking-wider mb-1">当前水平相对偏移</span>
+<div class="flex items-baseline gap-1.5">
+<span class="font-label-numeric text-[44px] leading-none font-bold text-primary tracking-tight" id="offset-display">+32</span>
+<span class="font-label-code text-headline-sm text-outline-variant font-semibold">DIP</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline mt-2 text-center">向右为正向偏移；默认紧贴系统天气组件</span>
+<!-- 辅助微米对齐指示器 -->
+<div class="flex items-center gap-1.5 mt-3 px-2 py-1 rounded bg-surface-container/60 text-outline text-[11px] font-label-code">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span>物理分辨率映射: 1 DIP ≈ 1.25 Physical Pixel (125% DPI)</span>
+</div>
+</div>
+<!-- 精致步进按钮组 -->
+<div class="grid grid-cols-3 gap-2">
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-on-surface transition-all font-body-md text-body-md shadow-sm group" id="btn-dec">
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+<span>左移 4px</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-on-surface transition-all font-body-md text-body-md shadow-sm group" id="btn-inc">
+<span>右移 4px</span>
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+</button>
+<button class="flex items-center justify-center gap-1 py-2.5 px-3 rounded-lg bg-surface-container-high/50 hover:bg-surface-container-high active:scale-[0.98] text-on-surface-variant hover:text-on-surface transition-all font-body-md text-body-md shadow-sm" id="btn-reset">
+<span class="material-symbols-outlined text-[16px]">restart_alt</span>
+<span>置零 (0)</span>
+</button>
+</div>
+<!-- 滑块调节 -->
+<div class="flex flex-col gap-2 pt-2">
+<div class="flex justify-between items-center font-label-code text-label-code text-outline text-[12px]">
+<span>-200 DIP (靠左)</span>
+<span class="text-on-surface font-semibold">滑块平滑调节</span>
+<span>+200 DIP (靠右)</span>
+</div>
+<div class="relative flex items-center">
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none" id="offset-range" max="200" min="-200" step="1" type="range" value="32">
+</div>
+<!-- 刻度刻痕 -->
+<div class="flex justify-between px-1 text-[10px] font-label-code text-outline/60">
+<span>| -200</span>
+<span>| -100</span>
+<span class="text-primary font-bold">| 0 (默认)</span>
+<span>| +100</span>
+<span>| +200</span>
+</div>
+</div>
+<!-- 细粒度扩展选项 -->
+<div class="pt-2 flex flex-col gap-2.5">
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest/60">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">vertical_align_center</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">垂直高度居中锁定</span>
+<span class="font-body-sm text-body-sm text-outline">紧随任务栏 40px/48px 规格自动垂直中线对齐</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest/60">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">move_group</span>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">避让通知气泡重叠</span>
+<span class="font-body-sm text-body-sm text-outline">当右侧出现临时托盘通知卡片时弹性左移 12px</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-9 h-5 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface-lowest after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-container"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- 快捷键与使用提示 -->
+<div class="rounded-xl bg-surface-container-low/60 p-space-md flex flex-col gap-2">
+<div class="flex items-center gap-2 text-outline font-label-caps text-label-caps uppercase tracking-wider">
+<span class="material-symbols-outlined text-[16px]">keyboard</span>
+<span>高频快捷键协同</span>
+</div>
+<div class="grid grid-cols-2 gap-2 text-body-sm font-body-sm">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container">
+<span class="text-on-surface-variant">快速微移 1px</span>
+<kbd class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code text-[11px]">Alt + ← / →</kbd>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container">
+<span class="text-on-surface-variant">步进微移 4px</span>
+<kbd class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code text-[11px]">Shift + ← / →</kbd>
+</div>
+</div>
+</div>
+</div>
+<!-- 右侧：高保真任务栏实时位置预览模拟器 (7列) -->
+<div class="xl:col-span-7 flex flex-col gap-space-md">
+<!-- 预览模拟器视窗 -->
+<div class="rounded-xl bg-surface-container-low/90 backdrop-blur-xl p-space-lg shadow-xl flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">monitor</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">任务栏实时模拟沙盒</h2>
+</div>
+<div class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container text-outline font-label-code text-[11px]">
+<span>1920 × 1080 @ 100% 缩放比例模拟</span>
+</div>
+</div>
+<p class="font-body-sm text-body-sm text-outline">下方呈现宿主桌面任务栏右侧驻留效果。黄色虚线为对齐锚定参照物，高亮蓝框为 QuotaBar 实际注入位置。</p>
+<!-- 模拟桌面屏幕与底部任务栏容器 -->
+<div class="w-full rounded-xl bg-surface-container-lowest p-3 flex flex-col gap-4 relative overflow-hidden shadow-inner min-h-[360px] justify-between">
+<!-- 桌面背景壁纸缩略预览 -->
+<div class="w-full h-44 rounded-lg bg-surface-container relative overflow-hidden flex items-center justify-center group">
+<img class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" data-alt="A minimalist hyper-detailed dark desktop wallpaper with smooth deep navy and charcoal gradients, neon subtle blue rim light, soft abstract fluid curves, extremely clean high-end tech aesthetic for modern developers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeNKechjJWi8N4qfwemGMwNL4WUD5yIfjN1zjDYXsRzDub3jY8QnGCyt7QTKhsLBySPCiYu1RoOxVy6xVVihI_rWcfFplOkSimFZtFctXWSss33F5ut2cPchrEprTWdoOHhRHZt4Cj4twrVd8RSs74HDibA2p0Rf50u1fCnNqlzj1QmvibDm3S7rYpjT5CpnkVxbCloLR2XiiNPIkdZjLjJKpHsL2Kt--n4UL-70c2u45sdipMPTqImA">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-black/30"></div>
+<!-- 桌面伪图标与小窗 -->
+<div class="absolute top-4 left-4 flex flex-col gap-3 pointer-events-none">
+<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-surface-container-high/70 backdrop-blur-md text-[11px] font-body-sm text-on-surface">
+<span class="material-symbols-outlined text-primary text-[14px]">terminal</span>
+<span>zsh — Claude Code CLI / Agent Monitor</span>
+</div>
+</div>
+<!-- 动态虚拟指示器浮层 -->
+<div class="absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-surface-container-lowest/80 backdrop-blur-md text-[11px] font-label-code text-outline-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span>坐标偏移动态标尺: <span class="text-primary font-bold" id="indicator-text">+32 DIP</span></span>
+</div>
+</div>
+<!-- 尺标刻度辅助带 (动态尺子) -->
+<div class="w-full relative h-6 bg-surface-container-high/30 rounded flex items-center px-4 overflow-hidden">
+<div class="absolute inset-0 flex justify-between items-center opacity-30 pointer-events-none px-6 text-[9px] font-label-code text-outline">
+<span>-120</span>
+<span>-80</span>
+<span>-40</span>
+<span class="text-tertiary">0 (锚点)</span>
+<span>+40</span>
+<span>+80</span>
+<span>+120</span>
+</div>
+<!-- 尺子中心指示线 -->
+<div class="absolute left-1/2 h-full w-[1px] bg-tertiary/40"></div>
+</div>
+<!-- 模拟 Windows 11 风格任务栏主体 -->
+<div class="w-full h-14 rounded-lg bg-surface-container/95 backdrop-blur-2xl px-3 flex items-center justify-between shadow-2xl relative">
+<!-- 左侧：Windows 天气小组件 (锚定基准) -->
+<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-surface-container-high/80 hover:bg-surface-variant cursor-pointer transition-colors relative" id="weather-anchor">
+<span class="material-symbols-outlined text-tertiary text-[20px]">partly_cloudy_day</span>
+<div class="flex flex-col leading-none">
+<span class="font-headline-sm text-[12px] font-semibold text-on-surface">22°C</span>
+<span class="font-body-sm text-[10px] text-outline">多云 · 空气优</span>
+</div>
+<!-- 锚点提示标签 -->
+<span class="absolute -top-3 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded bg-tertiary text-on-tertiary text-[9px] font-label-caps font-bold">对齐基准</span>
+</div>
+<!-- 动态虚拟位移量指示槽 (可根据偏移量动态移动) -->
+<div class="flex-1 flex items-center px-2 relative h-full">
+<!-- 相对基准参考线 -->
+<div class="h-6 w-[2px] bg-tertiary/80 rounded-full"></div>
+<!-- 动态距离标线 -->
+<div class="h-[2px] bg-primary/40 relative flex items-center justify-center transition-all duration-150" id="gap-visualizer" style="width: 32px;">
+<span class="absolute -top-4 text-[9px] font-label-code text-primary bg-primary/10 px-1 rounded whitespace-nowrap" id="gap-badge">+32px</span>
+</div>
+<!-- QuotaBar 实际注入常驻条组件模拟 -->
+<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-primary-container/20 ring-1 ring-primary/60 shadow-[0_0_12px_rgba(77,142,255,0.35)] transition-all duration-150 cursor-pointer" id="simulated-bar">
+<!-- 迷你仪表 1: 5h -->
+<div class="flex items-center gap-1 font-label-code text-[11px]">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="text-on-surface font-semibold">92%</span>
+</div>
+<div class="h-3 w-[1px] bg-outline-variant/50"></div>
+<!-- 迷你仪表 2: 7d -->
+<div class="flex items-center gap-1 font-label-code text-[11px]">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="text-on-surface font-semibold">68%</span>
+</div>
+<!-- 模型标头 -->
+<span class="px-1 rounded bg-primary/20 text-primary text-[9px] font-label-code">Claude 3.7</span>
+</div>
+</div>
+<!-- 中间：居中应用图标群组 -->
+<div class="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded bg-surface-container-lowest/40">
+<div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-primary hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">window</span>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">search</span>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">code</span>
+</div>
+<div class="w-7 h-7 rounded bg-surface-container-high flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[16px]">folder</span>
+</div>
+</div>
+<!-- 右侧：系统托盘、时间与操作中心 -->
+<div class="flex items-center gap-2 pl-2">
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px]">wifi</span>
+<span class="material-symbols-outlined text-[15px]">volume_up</span>
+<span class="material-symbols-outlined text-[15px]">battery_charging_90</span>
+</div>
+<div class="flex flex-col text-right font-label-code text-[10px] leading-tight text-outline">
+<span class="text-on-surface">14:02</span>
+<span>2025/5/12</span>
+</div>
+<div class="w-1 h-6 bg-outline-variant/30 rounded-full ml-1"></div>
+</div>
+</div>
+</div>
+<!-- 模拟器环境参数卡片群 -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+<div class="p-3 rounded-lg bg-surface-container flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase">宿主环境适配</span>
+<span class="font-headline-sm text-body-lg text-on-surface font-semibold">Windows 11 Build 22631</span>
+<span class="font-label-code text-[11px] text-secondary">Mica Alt 渲染生效中</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase">主显示器工作区</span>
+<span class="font-headline-sm text-body-lg text-on-surface font-semibold">Display 1 (主屏)</span>
+<span class="font-label-code text-[11px] text-outline">X: 0 ~ 1920 | Y: 1032 ~ 1080</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container flex flex-col gap-1">
+<span class="font-label-caps text-label-caps text-outline uppercase">停靠状态机</span>
+<span class="font-headline-sm text-body-lg text-on-surface font-semibold">DIP 坐标注入绑定</span>
+<span class="font-label-code text-[11px] text-primary">PID: 19482 (QuotaBar.Shell)</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 底部预设模组与配置导出快捷栏 -->
+<div class="rounded-xl bg-surface-container-low/70 p-space-md flex flex-col md:flex-row items-center justify-between gap-space-md shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">bookmarks</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">常用停靠间距预设</span>
+<span class="font-body-sm text-body-sm text-outline">一键适配各大主流任务栏定制工具 (如 StartAllBack, RetroBar, TranslucentTB)</span>
+</div>
+</div>
+<div class="flex items-center gap-2 flex-wrap">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm font-body-sm transition-colors" onclick="applyPreset(0)">
+        紧密贴合 (0 DIP)
+      </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm font-body-sm transition-colors" onclick="applyPreset(16)">
+        适中呼吸 (+16 DIP)
+      </button>
+<button class="px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-semibold text-body-sm font-body-sm shadow-sm transition-all" onclick="applyPreset(32)">
+        推荐方案 (+32 DIP)
+      </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm font-body-sm transition-colors" onclick="applyPreset(64)">
+        宽松扩展 (+64 DIP)
+      </button>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    let currentOffset = 32;
+    const offsetDisplay = document.getElementById('offset-display');
+    const offsetRange = document.getElementById('offset-range');
+    const gapVisualizer = document.getElementById('gap-visualizer');
+    const gapBadge = document.getElementById('gap-badge');
+    const indicatorText = document.getElementById('indicator-text');
+    const simulatedBar = document.getElementById('simulated-bar');
+
+    function updateOffsetUI(val) {
+      currentOffset = parseInt(val, 10);
+      if (isNaN(currentOffset)) currentOffset = 0;
+
+      // 限制边界
+      if (currentOffset > 200) currentOffset = 200;
+      if (currentOffset < -200) currentOffset = -200;
+
+      const formatted = (currentOffset > 0 ? '+' : '') + currentOffset;
+      offsetDisplay.innerText = formatted;
+      offsetRange.value = currentOffset;
+      indicatorText.innerText = formatted + ' DIP';
+
+      // 视觉模拟器动态映射：由于容器限制，按比例换算像素渲染 (限制在 0 至 160px 展现)
+      // 基准是 32px 对应 32px，负值时向左贴近
+      let visualPixelWidth = Math.max(4, Math.min(180, 32 + currentOffset * 0.6));
+      gapVisualizer.style.width = visualPixelWidth + 'px';
+      gapBadge.innerText = formatted + ' DIP';
+
+      // 当数值为 0 时微光提示
+      if (currentOffset === 0) {
+        gapBadge.classList.add('text-secondary');
+      } else {
+        gapBadge.classList.remove('text-secondary');
+      }
+    }
+
+    document.getElementById('btn-dec').addEventListener('click', () => {
+      updateOffsetUI(currentOffset - 4);
+      triggerFeedback();
+    });
+
+    document.getElementById('btn-inc').addEventListener('click', () => {
+      updateOffsetUI(currentOffset + 4);
+      triggerFeedback();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      updateOffsetUI(0);
+      triggerFeedback();
+    });
+
+    offsetRange.addEventListener('input', (e) => {
+      updateOffsetUI(e.target.value);
+    });
+
+    window.applyPreset = function(val) {
+      updateOffsetUI(val);
+      triggerFeedback();
+    };
+
+    function triggerFeedback() {
+      simulatedBar.classList.add('scale-105', 'bg-primary-container/40');
+      setTimeout(() => {
+        simulatedBar.classList.remove('scale-105', 'bg-primary-container/40');
+      }, 180);
+    }
+
+    // 键盘方向键快捷监听 (当页面聚焦时)
+    window.addEventListener('keydown', (e) => {
+      if (e.altKey) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          updateOffsetUI(currentOffset - 1);
+          triggerFeedback();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          updateOffsetUI(currentOffset + 1);
+          triggerFeedback();
+        }
+      } else if (e.shiftKey) {
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          updateOffsetUI(currentOffset - 4);
+          triggerFeedback();
+        } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          updateOffsetUI(currentOffset + 4);
+          triggerFeedback();
+        }
+      }
+    });
+
+    // 初始执行一次同步
+    updateOffsetUI(32);
+  })();
+</script></main></div></body></html>

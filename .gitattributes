@@ -1,0 +1,14 @@
+# Windows-only 仓库：文本统一 LF 入库、Windows 检出 CRLF。
+* text=auto
+
+# build.bat 必须保持 CRLF（cmd.exe 解析，GBK 内容由 git 原样保存）
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.rc  text eol=crlf
+
+# 二进制
+*.png binary
+*.ico binary
+*.zip binary
+*.exe binary
+*.dat binary

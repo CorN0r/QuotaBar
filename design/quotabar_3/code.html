@@ -1,0 +1,582 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error": "#ffb4ab",
+          "surface": "#10141a",
+          "on-tertiary": "#472a00",
+          "surface-bright": "#353940",
+          "inverse-surface": "#dfe2eb",
+          "secondary-fixed-dim": "#4edea3",
+          "background": "#10141a",
+          "on-primary-fixed-variant": "#004395",
+          "outline-variant": "#424754",
+          "tertiary-fixed": "#ffddb8",
+          "on-secondary-container": "#00311f",
+          "outline": "#8c909f",
+          "on-secondary-fixed-variant": "#005236",
+          "on-secondary": "#003824",
+          "on-secondary-fixed": "#002113",
+          "secondary": "#4edea3",
+          "on-tertiary-fixed-variant": "#653e00",
+          "error-container": "#93000a",
+          "on-primary-fixed": "#001a42",
+          "primary": "#adc6ff",
+          "surface-variant": "#31353c",
+          "inverse-primary": "#005ac2",
+          "on-surface-variant": "#c2c6d6",
+          "surface-dim": "#10141a",
+          "primary-fixed-dim": "#adc6ff",
+          "tertiary": "#ffb95f",
+          "on-background": "#dfe2eb",
+          "surface-container-highest": "#31353c",
+          "surface-tint": "#adc6ff",
+          "surface-container-low": "#181c22",
+          "tertiary-container": "#ca8100",
+          "primary-container": "#4d8eff",
+          "secondary-container": "#00a572",
+          "on-primary-container": "#00285d",
+          "secondary-fixed": "#6ffbbe",
+          "on-surface": "#dfe2eb",
+          "on-error-container": "#ffdad6",
+          "on-primary": "#002e6a",
+          "surface-container-lowest": "#0a0e14",
+          "on-tertiary-fixed": "#2a1700",
+          "on-error": "#690005",
+          "surface-container-high": "#262a31",
+          "surface-container": "#1c2026",
+          "inverse-on-surface": "#2d3137",
+          "on-tertiary-container": "#3e2400",
+          "tertiary-fixed-dim": "#ffb95f",
+          "primary-fixed": "#d8e2ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "space-sm": "0.5rem",
+          "space-xs": "0.25rem",
+          "space-lg": "1.25rem",
+          "space-md": "0.875rem",
+          "margin": "1.25rem",
+          "space-xl": "1.75rem"
+        },
+        "fontFamily": {
+          "body-sm": [
+            "Inter"
+          ],
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "label-caps": [
+            "Plus Jakarta Sans"
+          ],
+          "label-numeric": [
+            "JetBrains Mono"
+          ],
+          "label-code": [
+            "JetBrains Mono"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-sm": [
+            "15px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-caps": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-numeric": [
+            "18px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-code": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-background font-body-md text-on-surface select-none antialiased min-h-screen"><header class="fixed top-0 left-0 w-full h-14 bg-surface-container-lowest/90 backdrop-blur-xl z-50 flex items-center justify-between px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.35)]"><div class="flex items-center gap-space-md"><img alt="QuotaBar Logo" class="h-8 w-auto object-contain rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn7f4IYw2NZntXz20vYPkWXFSSz1f1BpEQVqRUG_JLabsuZbgKxLWyztjuHZ1Q_ALTfbLcjfFcibw3KfyXYT6q7g1Ezib2V2-vDMuaBNM2XsXYWRWLZT_uOxyEtmqHmbVaIZeykcFY-91yVYlNNDquIoicjzEZAMiYi031Mp2PEVRA8-6Iy0QlfTXzmJ98UPoUHYp1af3_XEQCRiYW7fyaCk0EaEjNsxjjeXa4P7sd1zWtHC5PGEWVpg"><div class="flex items-center gap-space-sm"><span class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">QuotaBar</span><span class="px-space-xs py-0.5 rounded bg-surface-container-high text-primary font-label-caps text-label-caps uppercase tracking-wider font-semibold">v2.4 Pro</span><span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container/40 text-secondary font-label-caps text-label-caps"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>守护常驻中</span></div></div><div class="flex items-center gap-space-sm"><button class="flex items-center gap-1 px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors font-body-sm text-body-sm" title="立即同步额度"><span class="material-symbols-outlined text-[16px]">sync</span><span>刷新</span></button><div class="h-4 w-[1px] bg-outline-variant/40 mx-1"></div><div class="flex items-center gap-1"><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最小化"><span class="material-symbols-outlined text-[18px]">minimize</span></button><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最大化"><span class="material-symbols-outlined text-[18px]">crop_square</span></button><button class="p-1.5 rounded hover:bg-error-container hover:text-on-error transition-colors text-on-surface-variant" title="关闭到托盘"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 bg-surface-container-low/95 backdrop-blur-md z-40 flex flex-col justify-between p-space-sm shadow-[1px_0_12px_rgba(0,0,0,0.25)]"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-space-xs font-label-caps text-label-caps uppercase tracking-wider text-outline">监控核心</div><nav class="flex flex-col gap-1" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="quota-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">donut_large</span><span>额度详情</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="position-adjustment" href="#"><span class="material-symbols-outlined text-[18px]">dock_to_right</span><span>调整位置</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]" data-path="display-monitoring" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>显示设置</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="account-api-keys" href="#"><span class="material-symbols-outlined text-[18px]">vpn_key</span><span>账户设置</span></a></nav></div><div class="p-space-sm rounded-lg bg-surface-container/60 flex flex-col gap-space-xs"><div class="flex items-center justify-between font-label-caps text-label-caps text-outline"><span>系统遥测</span><span class="inline-flex items-center gap-1 text-secondary font-label-code text-label-code"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>已连接</span></div><div class="flex flex-col font-label-code text-label-code text-on-surface-variant/80"><span class="text-[11px]">自动同步: 30s 周期</span><span class="text-[11px] text-outline">上次刷新 14:02:18</span></div></div></aside><div class="pl-56"><main class="relative pt-14 min-h-screen w-full bg-background"><div class="flex flex-col w-full">
+<div class="p-gutter flex flex-col gap-space-lg max-w-7xl mx-auto w-full pb-24">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm">
+<span class="px-space-xs py-0.5 rounded bg-primary/10 text-primary font-label-caps text-label-caps uppercase tracking-wider">HUD Config</span>
+<span class="text-outline font-label-code text-label-code">display.conf</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">显示设置</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">常驻条外观、轮询频率与通知预警</p>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container px-space-md py-1.5 rounded-lg shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">实时预览已就绪</span>
+<span class="text-outline font-label-code text-label-code">DIP 100%</span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<section class="lg:col-span-7 flex flex-col gap-space-md bg-surface-container-low p-space-lg rounded-xl shadow-md relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">desktop_windows</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">常驻显示模式</h2>
+<p class="font-body-sm text-body-sm text-outline">自定义任务栏状态条位置与渲染布局</p>
+</div>
+</div>
+<span class="font-label-caps text-label-caps text-primary px-space-xs py-0.5 rounded bg-primary/10">UI Anchor</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-caps text-label-caps uppercase tracking-wider text-outline">浮窗挂载模式</label>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm" id="mount-mode-group">
+<label class="relative flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-all">
+<input class="peer sr-only" name="display_mode" type="radio" value="dock_outside">
+<div class="w-4 h-4 mt-0.5 rounded-full bg-surface-container-highest flex items-center justify-center peer-checked:bg-primary transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface">贴靠任务栏外侧</span>
+<span class="font-body-sm text-body-sm text-outline">停靠于 Windows 任务栏正上方边沿</span>
+</div>
+</label>
+<label class="relative flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-all">
+<input class="peer sr-only" name="display_mode" type="radio" value="free_float">
+<div class="w-4 h-4 mt-0.5 rounded-full bg-surface-container-highest flex items-center justify-center peer-checked:bg-primary transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface">自由位置</span>
+<span class="font-body-sm text-body-sm text-outline">桌面任意拖动并自动持久化坐标</span>
+</div>
+</label>
+<label class="relative flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-all">
+<input class="peer sr-only" name="display_mode" type="radio" value="tray_only">
+<div class="w-4 h-4 mt-0.5 rounded-full bg-surface-container-highest flex items-center justify-center peer-checked:bg-primary transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface">仅托盘图标</span>
+<span class="font-body-sm text-body-sm text-outline">隐藏常驻条，右下角通知区域驻留</span>
+</div>
+</label>
+<label class="relative flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container-high cursor-pointer hover:bg-surface-container-highest transition-all shadow-sm">
+<input checked="" class="peer sr-only" name="display_mode" type="radio" value="taskbar_embed">
+<div class="w-4 h-4 mt-0.5 rounded-full bg-primary flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-body-lg text-body-lg text-primary font-semibold">嵌入任务栏</span>
+<span class="text-[10px] px-1 py-0.2 rounded bg-primary/20 text-primary font-label-caps">推荐</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">原生融合单行模式，极度节省空间</span>
+</div>
+</label>
+<label class="relative flex items-start gap-space-sm p-space-md rounded-lg bg-surface-container cursor-pointer hover:bg-surface-container-high transition-all sm:col-span-2">
+<input class="peer sr-only" name="display_mode" type="radio" value="pill_capsule">
+<div class="w-4 h-4 mt-0.5 rounded-full bg-surface-container-highest flex items-center justify-center peer-checked:bg-primary transition-colors">
+<span class="w-1.5 h-1.5 rounded-full bg-surface"></span>
+</div>
+<div class="flex items-center justify-between w-full">
+<div class="flex flex-col min-w-0">
+<span class="font-body-lg text-body-lg text-on-surface">圆环浮标</span>
+<span class="font-body-sm text-body-sm text-outline">任务栏上方极简动态胶囊，悬浮环形仪表</span>
+</div>
+<span class="material-symbols-outlined text-outline">donut_small</span>
+</div>
+</label>
+</div>
+</div>
+<div class="p-space-md bg-surface-container/70 rounded-lg flex flex-col gap-space-md">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-outline">样式微调与渲染控制</span>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">排版布局</span>
+<div class="flex p-1 bg-surface-container-lowest rounded-lg gap-1">
+<button class="flex-1 py-1 px-space-sm rounded font-body-sm text-body-sm text-on-surface hover:bg-surface-container transition-colors" data-layout="double" type="button">双行堆叠</button>
+<button class="flex-1 py-1 px-space-sm rounded bg-primary-container text-on-primary-container font-semibold font-body-sm text-body-sm shadow-sm" data-layout="single" type="button">单行紧凑</button>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">字体字号</span>
+<span class="font-label-numeric text-label-numeric text-primary" id="fontSizeVal">9 pt</span>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-lowest p-1 rounded-lg">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors" id="fontDec" type="button">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<div class="flex-1 text-center font-label-code text-label-code text-on-surface">9.0 pt (微调)</div>
+<button class="w-7 h-7 flex items-center justify-center rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors" id="fontInc" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<span class="font-body-sm text-body-sm text-on-surface-variant">字色自适应</span>
+<div class="grid grid-cols-3 gap-space-xs bg-surface-container-lowest p-1 rounded-lg">
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded bg-surface-container-high text-primary font-body-sm text-body-sm font-semibold shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+<span>自动感知</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" type="button">
+<span class="w-2.5 h-2.5 rounded-full bg-white"></span>
+<span>纯白高反差</span>
+</button>
+<button class="flex items-center justify-center gap-1.5 py-1.5 rounded text-on-surface-variant hover:bg-surface-container font-body-sm text-body-sm transition-colors" type="button">
+<span class="w-2.5 h-2.5 rounded-full bg-slate-900"></span>
+<span>深墨极简</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<span class="font-body-sm text-body-sm text-on-surface-variant">常驻栏展示模型标签</span>
+<span class="font-label-caps text-label-caps text-outline">已选 4/4 项</span>
+</div>
+<div class="flex flex-wrap gap-space-xs">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox">
+<span class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant peer-checked:bg-primary/20 peer-checked:text-primary transition-all font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px]">check</span>
+                  Kimi
+                </span>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox">
+<span class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant peer-checked:bg-primary/20 peer-checked:text-primary transition-all font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px]">check</span>
+                  DeepSeek
+                </span>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox">
+<span class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant peer-checked:bg-primary/20 peer-checked:text-primary transition-all font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px]">check</span>
+                  Codex
+                </span>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox">
+<span class="inline-flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface-variant peer-checked:bg-primary/20 peer-checked:text-primary transition-all font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[15px]">check</span>
+                  GLM
+                </span>
+</label>
+</div>
+</div>
+</div>
+</section>
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<section class="flex flex-col gap-space-md bg-surface-container-low p-space-lg rounded-xl shadow-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[18px]">update</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">查询与智能提醒</h2>
+<p class="font-body-sm text-body-sm text-outline">配置轮询频次和额度枯竭熔断通知</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">notifications_active</span>
+</div>
+<div class="flex flex-col gap-space-sm bg-surface-container p-space-md rounded-lg">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface">常规刷新间隔</span>
+<div class="flex items-center gap-1">
+<input class="w-16 bg-surface-container-lowest text-right font-label-numeric text-label-numeric px-2 py-0.5 rounded text-primary focus:outline-none" id="pollingInput" max="3600" min="60" type="number" value="300">
+<span class="font-body-sm text-body-sm text-outline">秒</span>
+</div>
+</div>
+<input class="w-full h-1.5 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary" id="pollingRange" max="3600" min="60" step="30" type="range" value="300">
+<div class="flex justify-between font-label-code text-label-code text-outline text-[11px]">
+<span>60s (频繁)</span>
+<span>推荐 300s</span>
+<span>3600s (省流)</span>
+</div>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container rounded-lg">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">节能模式</span>
+<span class="font-body-sm text-body-sm text-outline">检测到系统闲置锁定固定 900 秒轮询</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" id="ecoSwitch" type="checkbox">
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<div class="flex flex-col gap-space-sm bg-surface-container p-space-md rounded-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px] text-tertiary">warning</span>
+<span class="font-body-md text-body-md text-on-surface">低额度跨阈值预警</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary-container"></div>
+</label>
+</div>
+<span class="font-body-sm text-body-sm text-outline">当账户余量跌破下限时，通过操作系统通知横幅提醒</span>
+<div class="grid grid-cols-2 gap-space-sm mt-1">
+<div class="flex flex-col gap-1 bg-surface-container-lowest p-space-sm rounded-lg">
+<span class="font-label-caps text-label-caps text-outline">Kimi / GLM 阈值</span>
+<div class="flex items-center justify-between">
+<span class="font-label-code text-label-code text-on-surface">≤</span>
+<div class="flex items-center gap-1">
+<input class="w-10 bg-transparent text-right font-label-numeric text-label-numeric text-tertiary focus:outline-none" type="number" value="20">
+<span class="font-body-sm text-body-sm text-outline">%</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1 bg-surface-container-lowest p-space-sm rounded-lg">
+<span class="font-label-caps text-label-caps text-outline">DeepSeek 余额</span>
+<div class="flex items-center justify-between">
+<span class="font-label-code text-label-code text-on-surface">≤</span>
+<div class="flex items-center gap-1">
+<input class="w-12 bg-transparent text-right font-label-numeric text-label-numeric text-tertiary focus:outline-none" type="text" value="5.00">
+<span class="font-body-sm text-body-sm text-outline">¥</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="flex flex-col gap-space-md bg-surface-container-low p-space-lg rounded-xl shadow-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">启动与数据管理</h2>
+<p class="font-body-sm text-body-sm text-outline">守护进程生命周期与本地存储控制</p>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center justify-between p-space-md bg-surface-container rounded-lg">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">开机自启动</span>
+<span class="font-body-sm text-body-sm text-outline">系统登录后自动静默最小化运行</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-space-md bg-surface-container rounded-lg">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface">测试模式 (Mock Data)</span>
+<span class="font-body-sm text-body-sm text-outline">合成假数据供排版测试，标注 [测试]</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary"></div>
+</label>
+</div>
+</div>
+<div class="pt-2">
+<button class="w-full flex items-center justify-between px-space-md py-2.5 rounded-lg bg-error-container/20 hover:bg-error-container/30 text-error font-body-sm text-body-sm transition-all" id="clearDataBtn" type="button">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">delete_sweep</span>
+                清除本地缓存数据...
+              </span>
+<span class="font-label-code text-label-code opacity-75">1.4 MB Cache</span>
+</button>
+</div>
+</section>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-lg rounded-xl shadow-md flex flex-col md:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">view_compact_alt</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Windows 任务栏嵌入预览</span>
+<span class="font-body-sm text-body-sm text-outline">当前配置: 任务栏单行嵌入 • 9pt • 4模型轮播</span>
+</div>
+</div>
+<div class="w-full md:w-auto flex-1 max-w-xl bg-surface-container-lowest p-2 rounded-lg flex items-center justify-between gap-2">
+<div class="flex items-center gap-2 text-outline">
+<span class="material-symbols-outlined text-[16px]">grid_view</span>
+<span class="material-symbols-outlined text-[16px]">search</span>
+</div>
+<div class="flex items-center gap-space-md px-3 py-1 rounded bg-surface-container-high/80 text-on-surface font-label-code text-[11px] shadow-sm">
+<span class="inline-flex items-center gap-1 text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Kimi 84%</span>
+<span class="text-outline-variant">|</span>
+<span class="inline-flex items-center gap-1 text-primary"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>DeepSeek ¥32.5</span>
+<span class="text-outline-variant">|</span>
+<span class="text-on-surface-variant">GLM 92%</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline font-label-code text-[11px]">
+<span class="material-symbols-outlined text-[14px]">wifi</span>
+<span class="material-symbols-outlined text-[14px]">volume_up</span>
+<span>14:32</span>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-56 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl px-gutter flex items-center justify-between shadow-[0_-4px_20px_rgba(0,0,0,0.5)] z-40">
+<div class="flex items-center gap-space-sm text-outline font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>所有更改将在点击保存后即时广播到常驻线程</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-body-sm text-body-sm" type="button">
+        放弃变更
+      </button>
+<button class="flex items-center gap-1.5 px-space-lg py-2 rounded-lg bg-primary text-on-primary hover:opacity-90 transition-all font-body-lg text-body-lg font-semibold shadow-[0_0_16px_rgba(173,198,255,0.3)]" id="saveSettingsBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>保存设置</span>
+</button>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const pollingInput = document.getElementById('pollingInput');
+    const pollingRange = document.getElementById('pollingRange');
+    const ecoSwitch = document.getElementById('ecoSwitch');
+    const fontSizeVal = document.getElementById('fontSizeVal');
+    const fontInc = document.getElementById('fontInc');
+    const fontDec = document.getElementById('fontDec');
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    const clearBtn = document.getElementById('clearDataBtn');
+
+    let currentFontSize = 9;
+
+    if (pollingInput && pollingRange) {
+      pollingRange.addEventListener('input', (e) => {
+        pollingInput.value = e.target.value;
+      });
+      pollingInput.addEventListener('change', (e) => {
+        let v = parseInt(e.target.value, 10);
+        if (isNaN(v)) v = 300;
+        v = Math.max(60, Math.min(3600, v));
+        pollingInput.value = v;
+        pollingRange.value = v;
+      });
+    }
+
+    if (ecoSwitch && pollingInput && pollingRange) {
+      ecoSwitch.addEventListener('change', (e) => {
+        if (e.target.checked) {
+          pollingInput.value = 900;
+          pollingRange.value = 900;
+          pollingRange.disabled = true;
+          pollingInput.disabled = true;
+        } else {
+          pollingRange.disabled = false;
+          pollingInput.disabled = false;
+          pollingInput.value = 300;
+          pollingRange.value = 300;
+        }
+      });
+    }
+
+    if (fontInc && fontDec && fontSizeVal) {
+      fontInc.addEventListener('click', () => {
+        if (currentFontSize < 16) {
+          currentFontSize += 0.5;
+          fontSizeVal.textContent = currentFontSize + ' pt';
+        }
+      });
+      fontDec.addEventListener('click', () => {
+        if (currentFontSize > 7) {
+          currentFontSize -= 0.5;
+          fontSizeVal.textContent = currentFontSize + ' pt';
+        }
+      });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', () => {
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">sync</span><span>已保存</span>';
+        setTimeout(() => {
+          saveBtn.innerHTML = originalText;
+        }, 1200);
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (confirm('确定清除本地已缓存的额度快照与历史遥测记录吗？此操作不会影响 API 密钥。')) {
+          clearBtn.textContent = '缓存已清空 (0 B)';
+          setTimeout(() => {
+            clearBtn.innerHTML = '<span class="flex items-center gap-2"><span class="material-symbols-outlined text-[16px]">delete_sweep</span>清除本地缓存数据...</span><span class="font-label-code text-label-code opacity-75">0 KB</span>';
+          }, 1500);
+        }
+      });
+    }
+  })();
+</script></main></div></body></html>

@@ -1,0 +1,7 @@
+=== probe(START OPEN) @ 11:25:57.621 ===
+TOP  Windows.UI.Core.CoreWindow | vis=True | 0,1,1203,678 (1203x677)
+TOP  Windows.UI.Core.CoreWindow | vis=True | 0,0,1560,1040 (1560x1040)
+TRAY rect=0,992,1560,1040 (1560x48)
+  child MSTaskSwWClass | vis=True | 469,992,958,1040 (489x48)
+  child MSTaskListWClass | vis=False | 469,992,958,1040 (489x48)
+  child Windows.UI.Input.InputSite.WindowClass | vis=True | 0,992,0,992 (0x0)

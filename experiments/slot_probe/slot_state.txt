@@ -1,0 +1,4 @@
+=== slot-state probe @ 11:25:58.094 ===
+Shell_TrayWnd=591704
+direct child via FindWindowExW: 8391452
+NO QuotaBarSlotWnd EXISTS anywhere

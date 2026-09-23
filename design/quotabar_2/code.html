@@ -1,0 +1,535 @@
+<!DOCTYPE html><html class="dark" lang="zh-CN"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "error": "#ffb4ab",
+          "surface": "#10141a",
+          "on-tertiary": "#472a00",
+          "surface-bright": "#353940",
+          "inverse-surface": "#dfe2eb",
+          "secondary-fixed-dim": "#4edea3",
+          "background": "#10141a",
+          "on-primary-fixed-variant": "#004395",
+          "outline-variant": "#424754",
+          "tertiary-fixed": "#ffddb8",
+          "on-secondary-container": "#00311f",
+          "outline": "#8c909f",
+          "on-secondary-fixed-variant": "#005236",
+          "on-secondary": "#003824",
+          "on-secondary-fixed": "#002113",
+          "secondary": "#4edea3",
+          "on-tertiary-fixed-variant": "#653e00",
+          "error-container": "#93000a",
+          "on-primary-fixed": "#001a42",
+          "primary": "#adc6ff",
+          "surface-variant": "#31353c",
+          "inverse-primary": "#005ac2",
+          "on-surface-variant": "#c2c6d6",
+          "surface-dim": "#10141a",
+          "primary-fixed-dim": "#adc6ff",
+          "tertiary": "#ffb95f",
+          "on-background": "#dfe2eb",
+          "surface-container-highest": "#31353c",
+          "surface-tint": "#adc6ff",
+          "surface-container-low": "#181c22",
+          "tertiary-container": "#ca8100",
+          "primary-container": "#4d8eff",
+          "secondary-container": "#00a572",
+          "on-primary-container": "#00285d",
+          "secondary-fixed": "#6ffbbe",
+          "on-surface": "#dfe2eb",
+          "on-error-container": "#ffdad6",
+          "on-primary": "#002e6a",
+          "surface-container-lowest": "#0a0e14",
+          "on-tertiary-fixed": "#2a1700",
+          "on-error": "#690005",
+          "surface-container-high": "#262a31",
+          "surface-container": "#1c2026",
+          "inverse-on-surface": "#2d3137",
+          "on-tertiary-container": "#3e2400",
+          "tertiary-fixed-dim": "#ffb95f",
+          "primary-fixed": "#d8e2ff"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "gutter": "1rem",
+          "space-sm": "0.5rem",
+          "space-xs": "0.25rem",
+          "space-lg": "1.25rem",
+          "space-md": "0.875rem",
+          "margin": "1.25rem",
+          "space-xl": "1.75rem"
+        },
+        "fontFamily": {
+          "body-sm": [
+            "Inter"
+          ],
+          "headline-sm": [
+            "Plus Jakarta Sans"
+          ],
+          "label-caps": [
+            "Plus Jakarta Sans"
+          ],
+          "label-numeric": [
+            "JetBrains Mono"
+          ],
+          "label-code": [
+            "JetBrains Mono"
+          ],
+          "headline-lg": [
+            "Plus Jakarta Sans"
+          ],
+          "headline-md": [
+            "Plus Jakarta Sans"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "body-sm": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-sm": [
+            "15px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-caps": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-numeric": [
+            "18px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "600"
+            }
+          ],
+          "label-code": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg": [
+            "22px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "700"
+            }
+          ],
+          "headline-md": [
+            "18px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-md": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-lg": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "500"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-background font-body-md text-on-surface select-none antialiased min-h-screen"><header class="fixed top-0 left-0 w-full h-14 bg-surface-container-lowest/90 backdrop-blur-xl z-50 flex items-center justify-between px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.35)]"><div class="flex items-center gap-space-md"><img alt="QuotaBar Logo" class="h-8 w-auto object-contain rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZd8Kcj78NthSCxUbVL8fxfmfLW7lBtqGqkidP7Ic0SvVhYqtHItA-b_oi1WkbbKPXytYdCPVKJOlLnAMjwDNO7cTeODNXUpnbPtmua-VCnkK1sJMr34jVwAC95VDHfRdgq6c-2X2G1-KwqmMzMwpNQpxhp5pB66aumqp1X05g8xIQTtguqlzlF1FM-RKQx4StPFkt6nbyXrVrtdsXx7mPii-ByZvRkNkM5OKP6nFQDSCOyM_EJhKMHA"><div class="flex items-center gap-space-sm"><span class="font-headline-md text-headline-md text-on-surface tracking-tight font-bold">QuotaBar</span><span class="px-space-xs py-0.5 rounded bg-surface-container-high text-primary font-label-caps text-label-caps uppercase tracking-wider font-semibold">v2.4 Pro</span><span class="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-secondary-container/40 text-secondary font-label-caps text-label-caps"><span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>守护常驻中</span></div></div><div class="flex items-center gap-space-sm"><button class="flex items-center gap-1 px-space-sm py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-colors font-body-sm text-body-sm" title="立即同步额度"><span class="material-symbols-outlined text-[16px]">sync</span><span>刷新</span></button><div class="h-4 w-[1px] bg-outline-variant/40 mx-1"></div><div class="flex items-center gap-1"><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最小化"><span class="material-symbols-outlined text-[18px]">minimize</span></button><button class="p-1.5 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="最大化"><span class="material-symbols-outlined text-[18px]">crop_square</span></button><button class="p-1.5 rounded hover:bg-error-container hover:text-on-error transition-colors text-on-surface-variant" title="关闭到托盘"><span class="material-symbols-outlined text-[18px]">close</span></button></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center ml-space-xs"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-14 h-[calc(100vh-3.5rem)] w-56 bg-surface-container-low/95 backdrop-blur-md z-40 flex flex-col justify-between p-space-sm shadow-[1px_0_12px_rgba(0,0,0,0.25)]"><div class="flex flex-col gap-space-xs"><div class="px-space-sm py-space-xs font-label-caps text-label-caps uppercase tracking-wider text-outline">监控核心</div><nav class="flex flex-col gap-1" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg shadow-[0_0_12px_rgba(77,142,255,0.25)]" data-path="quota-dashboard" href="#"><span class="material-symbols-outlined text-[18px]">donut_large</span><span>额度详情</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="position-adjustment" href="#"><span class="material-symbols-outlined text-[18px]">dock_to_right</span><span>调整位置</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="display-monitoring" href="#"><span class="material-symbols-outlined text-[18px]">tune</span><span>显示设置</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="account-api-keys" href="#"><span class="material-symbols-outlined text-[18px]">vpn_key</span><span>账户设置</span></a></nav></div><div class="p-space-sm rounded-lg bg-surface-container/60 flex flex-col gap-space-xs"><div class="flex items-center justify-between font-label-caps text-label-caps text-outline"><span>系统遥测</span><span class="inline-flex items-center gap-1 text-secondary font-label-code text-label-code"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>已连接</span></div><div class="flex flex-col font-label-code text-label-code text-on-surface-variant/80"><span class="text-[11px]">自动同步: 30s 周期</span><span class="text-[11px] text-outline">上次刷新 14:02:18</span></div></div></aside><div class="pl-56"><main class="relative pt-14 min-h-screen w-full bg-background"><div class="flex flex-col w-full">
+<div class="p-space-lg max-w-7xl mx-auto w-full flex flex-col gap-space-lg">
+<!-- Top Action & Status Bar -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">额度详情</h1>
+<span class="px-space-xs py-0.5 rounded bg-surface-container text-secondary font-label-code text-label-code flex items-center gap-1.5 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>4/4 服务已就绪
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant">QuotaBar · 实时额度与账户状态监控</p>
+</div>
+<div class="flex items-center gap-space-sm self-start sm:self-auto">
+<button class="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-all active:scale-95 shadow-sm group" id="refreshAllBtn">
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:rotate-180 transition-transform duration-500">sync</span>
+<span class="font-body-sm text-body-sm font-medium">刷新</span>
+</button>
+<button class="flex items-center gap-1.5 px-space-md py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container transition-all active:scale-95 shadow-sm font-body-sm text-body-sm font-semibold" id="copyAllBtn">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+<span id="copyText">复制全部</span>
+</button>
+</div>
+</div>
+<!-- Metric Dashboard Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Card 1: Kimi Code -->
+<div class="relative group bg-surface-container-low/80 hover:bg-surface-container-low backdrop-blur-md rounded-xl p-space-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 right-0 w-36 h-36 bg-primary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/10 transition-colors"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface font-headline-sm font-bold shadow-inner">
+                K
+              </div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Kimi Code</span>
+<span class="font-body-sm text-body-sm text-outline">月度开发者授权</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-secondary-container/30 text-secondary font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></span>
+              正常
+            </div>
+</div>
+<!-- Gauges Area -->
+<div class="grid grid-cols-2 gap-space-sm py-space-xs bg-surface-container-lowest/50 rounded-lg p-space-sm">
+<!-- 5h limit -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-secondary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="86, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-on-surface">5h</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-on-surface tracking-tight">86</span>
+<span class="font-label-code text-label-code text-on-surface-variant">%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline truncate">余 4小时3分</span>
+</div>
+</div>
+<!-- 7d limit -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-tertiary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="17, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-on-surface">7d</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-tertiary tracking-tight">17</span>
+<span class="font-label-code text-label-code text-on-surface-variant">%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline truncate">余 2天22小时</span>
+</div>
+</div>
+</div>
+<!-- Note -->
+<div class="flex items-center gap-1.5 px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-outline">info</span>
+<span class="font-body-sm text-body-sm text-outline truncate">会员月额度：未获取（仅显示 Code 周期额度）</span>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-space-md mt-space-sm flex items-center justify-between bg-surface-container-high/20 -mx-space-lg -mb-space-lg px-space-lg py-space-sm">
+<span class="font-label-code text-label-code text-outline flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+            最后成功 2026-09-13 01:08
+          </span>
+<a class="inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors font-medium" href="#">
+            打开控制台 <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 2: Codex (ChatGPT 订阅) -->
+<div class="relative group bg-surface-container-low/80 hover:bg-surface-container-low backdrop-blur-md rounded-xl p-space-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 right-0 w-36 h-36 bg-secondary/5 rounded-full blur-3xl pointer-events-none group-hover:bg-secondary/10 transition-colors"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-secondary-container/30 text-secondary flex items-center justify-center font-headline-sm font-bold shadow-inner">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Codex (ChatGPT 订阅)</span>
+<span class="font-body-sm text-body-sm text-outline">Team Workspace 专属</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-secondary-container/30 text-secondary font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></span>
+              正常
+            </div>
+</div>
+<!-- Gauges Area -->
+<div class="grid grid-cols-2 gap-space-sm py-space-xs bg-surface-container-lowest/50 rounded-lg p-space-sm">
+<!-- 5h limit (Critical / Low) -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-error transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="4, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-error">5h</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-error tracking-tight">4</span>
+<span class="font-label-code text-label-code text-error/80">%</span>
+<span class="px-1 py-0.2 rounded bg-error/20 text-error font-label-caps text-[9px]">触底</span>
+</div>
+<span class="font-body-sm text-body-sm text-error truncate">仅剩 2小时47分</span>
+</div>
+</div>
+<!-- 7d limit -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-secondary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-on-surface">7d</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-on-surface tracking-tight">85</span>
+<span class="font-label-code text-label-code text-on-surface-variant">%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline truncate">余 6天21小时</span>
+</div>
+</div>
+</div>
+<!-- Note -->
+<div class="flex items-center gap-1.5 px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-outline">help_outline</span>
+<span class="font-body-sm text-body-sm text-outline truncate">仅百分比口径（官方端点不返回绝对额度数）</span>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-space-md mt-space-sm flex items-center justify-between bg-surface-container-high/20 -mx-space-lg -mb-space-lg px-space-lg py-space-sm">
+<span class="font-label-code text-label-code text-outline flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+            最后成功 2026-09-13 01:08
+          </span>
+<a class="inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors font-medium" href="#">
+            打开控制台 <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 3: DeepSeek 余额 -->
+<div class="relative group bg-surface-container-low/80 hover:bg-surface-container-low backdrop-blur-md rounded-xl p-space-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 right-0 w-36 h-36 bg-primary-container/10 rounded-full blur-3xl pointer-events-none group-hover:bg-primary-container/20 transition-colors"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-headline-sm font-bold shadow-inner">
+<span class="material-symbols-outlined text-[20px]">smart_toy</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">DeepSeek 余额</span>
+<span class="font-body-sm text-body-sm text-outline">Pay-as-you-go 结算账户</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-secondary-container/30 text-secondary font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></span>
+              正常
+            </div>
+</div>
+<!-- Currency & Sparkline Highlight -->
+<div class="flex items-center justify-between bg-surface-container-lowest/50 rounded-lg p-space-md">
+<div class="flex flex-col">
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">可用法币余额</span>
+<div class="flex items-baseline gap-1.5 mt-0.5">
+<span class="font-label-numeric text-[28px] leading-tight text-primary font-bold tracking-tight">¥ 21.99</span>
+<span class="font-label-code text-label-code text-on-surface-variant font-medium">CNY</span>
+</div>
+<span class="font-body-sm text-[11px] text-secondary flex items-center gap-1 mt-0.5">
+<span class="material-symbols-outlined text-[13px]">trending_up</span>消耗平稳 · 预计可用 14 天
+              </span>
+</div>
+<!-- Mini Sparkline inline svg -->
+<div class="flex flex-col items-end gap-1">
+<span class="font-label-caps text-[10px] text-outline">近7日消耗趋势</span>
+<svg class="w-24 h-9 overflow-visible" viewBox="0 0 100 36">
+<defs>
+<linearGradient id="deepseekGlow" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#adc6ff" stop-opacity="0.3"></stop>
+<stop offset="100%" stop-color="#adc6ff" stop-opacity="0"></stop>
+</linearGradient>
+</defs>
+<path d="M 0,28 Q 20,24 40,26 T 70,14 T 100,6 L 100,36 L 0,36 Z" fill="url(#deepseekGlow)"></path>
+<path d="M 0,28 Q 20,24 40,26 T 70,14 T 100,6" fill="none" stroke="#adc6ff" stroke-linecap="round" stroke-width="2"></path>
+<circle class="animate-pulse" cx="100" cy="6" fill="#4d8eff" r="3"></circle>
+</svg>
+</div>
+</div>
+<!-- Note -->
+<div class="flex items-center gap-1.5 px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-outline">receipt_long</span>
+<span class="font-body-sm text-body-sm text-outline truncate">总额已含赠金/充值拆分，不重复相加</span>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-space-md mt-space-sm flex items-center justify-between bg-surface-container-high/20 -mx-space-lg -mb-space-lg px-space-lg py-space-sm">
+<span class="font-label-code text-label-code text-outline flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+            最后成功 2026-09-13 01:08
+          </span>
+<a class="inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors font-medium" href="#">
+            打开控制台 <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 4: GLM Coding Plan -->
+<div class="relative group bg-surface-container-low/80 hover:bg-surface-container-low backdrop-blur-md rounded-xl p-space-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden">
+<div class="absolute top-0 right-0 w-36 h-36 bg-tertiary-container/10 rounded-full blur-3xl pointer-events-none group-hover:bg-tertiary-container/20 transition-colors"></div>
+<div class="flex flex-col gap-space-md relative z-10">
+<!-- Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-surface-variant text-primary-fixed flex items-center justify-center font-headline-sm font-bold shadow-inner">
+<span class="material-symbols-outlined text-[20px]">hub</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">GLM Coding Plan</span>
+<span class="font-body-sm text-body-sm text-outline">智谱 BigModel 编程订阅</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1.5 px-space-sm py-1 rounded-full bg-secondary-container/30 text-secondary font-label-caps text-label-caps">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></span>
+              正常
+            </div>
+</div>
+<!-- Gauges Area -->
+<div class="grid grid-cols-2 gap-space-sm py-space-xs bg-surface-container-lowest/50 rounded-lg p-space-sm">
+<!-- 5h limit -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-secondary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="97, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-on-surface">5h</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-on-surface tracking-tight">97</span>
+<span class="font-label-code text-label-code text-on-surface-variant">%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline truncate">余 1小时38分</span>
+</div>
+</div>
+<!-- 7d limit -->
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex-shrink-0">
+<svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-surface-container-highest" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3.5"></path>
+<path class="text-secondary transition-all duration-1000 ease-out" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="99, 100" stroke-linecap="round" stroke-width="3.5"></path>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-code text-[10px] font-semibold text-on-surface">7d</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-baseline gap-1">
+<span class="font-label-numeric text-label-numeric text-on-surface tracking-tight">99</span>
+<span class="font-label-code text-label-code text-on-surface-variant">%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline truncate">余 5天22小时</span>
+</div>
+</div>
+</div>
+<!-- Note -->
+<div class="flex items-center gap-1.5 px-space-xs text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-outline">data_object</span>
+<span class="font-body-sm text-body-sm text-outline truncate">月余为 MCP 调用次数，不计入常驻显示</span>
+</div>
+</div>
+<!-- Card Footer -->
+<div class="pt-space-md mt-space-sm flex items-center justify-between bg-surface-container-high/20 -mx-space-lg -mb-space-lg px-space-lg py-space-sm">
+<span class="font-label-code text-label-code text-outline flex items-center gap-1">
+<span class="w-1 h-1 rounded-full bg-outline"></span>
+            最后成功 2026-09-13 01:08
+          </span>
+<a class="inline-flex items-center gap-1 font-body-sm text-body-sm text-primary hover:text-primary-fixed transition-colors font-medium" href="#">
+            打开控制台 <span class="material-symbols-outlined text-[15px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Telemetry Status Strip -->
+<div class="p-space-md rounded-xl bg-surface-container-low/60 flex flex-col md:flex-row items-start md:items-center justify-between gap-space-sm shadow-inner">
+<div class="flex items-center gap-space-sm">
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">已挂载 Windows / macOS 托盘微件守护进程，后台常驻资源消耗 &lt; 0.2% CPU</span>
+</div>
+<div class="flex items-center gap-space-md self-end md:self-auto font-label-code text-[11px] text-outline">
+<span>网络轮询协议: HTTP/2 Keep-Alive</span>
+<span class="h-3 w-[1px] bg-surface-container-highest"></span>
+<span class="text-primary hover:underline cursor-pointer">配置阈值报警</span>
+</div>
+</div>
+</div>
+<script>
+    // Copy summary snippet interaction
+    const copyBtn = document.getElementById('copyAllBtn');
+    const copyText = document.getElementById('copyText');
+    if (copyBtn && copyText) {
+      copyBtn.addEventListener('click', () => {
+        const report = [
+          "【QuotaBar 额度监控快报】",
+          "· Kimi Code: 5h(86%) / 7d(17%)",
+          "· Codex: 5h(4% [预警]) / 7d(85%)",
+          "· DeepSeek: 余额 ¥21.99 CNY",
+          "· GLM Coding: 5h(97%) / 7d(99%)",
+          "同步时间: " + new Date().toLocaleTimeString()
+        ].join('\n');
+        
+        navigator.clipboard.writeText(report).then(() => {
+          const original = copyText.innerText;
+          copyText.innerText = '已复制快报!';
+          setTimeout(() => {
+            copyText.innerText = original;
+          }, 2000);
+        }).catch(() => {
+          copyText.innerText = '复制失败';
+        });
+      });
+    }
+
+    // Refresh simulation interaction
+    const refreshBtn = document.getElementById('refreshAllBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        const icon = refreshBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.add('animate-spin');
+          setTimeout(() => {
+            icon.classList.remove('animate-spin');
+          }, 1200);
+        }
+      });
+    }
+  </script>
+</div></main></div></body></html>

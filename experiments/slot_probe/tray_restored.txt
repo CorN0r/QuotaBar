@@ -1,0 +1,4 @@
+=== probe(WIN TOGGLE, after) @ 11:13:42.409 ===
+  child MSTaskSwWClass | vis=True | 469,992,958,1040 (489x48)
+  child MSTaskListWClass | vis=False | 469,992,958,1040 (489x48)
+  child Windows.UI.Input.InputSite.WindowClass | vis=True | 0,992,0,992 (0x0)

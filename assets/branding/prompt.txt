@@ -1,0 +1,13 @@
+Create one original brand symbol for QuotaBar, a Windows desktop app that quietly tracks remaining AI subscription quotas (5-hour / weekly windows) for multiple coding-plan accounts. Flat vector logo mark on a genuinely transparent background, square canvas. One extra-thick uniform progress ring, no backing tile, the mark filling about 80 percent of the canvas. The main arc sweeps about 290 degrees clockwise from a rounded cap at 12 o'clock, down the right side, around the bottom, ending near 8 o'clock; its color flows continuously along the arc from periwinkle blue (#5A80FA) at the cap, through azure, to vivid violet (#A250FA) at the far end. In the remaining top-left gap, a short dark slate segment (#383E4E) hugs the cap side as the empty track, and one small mint-green dot (#3CE6C2) sits on the ring path near the violet end, marking the current position. Flat vector, bold uniform stroke thickness, perfectly concentric, balanced like a calm circular dial. No text, no letters, no numbers, no ticks, no spinner arrows, no chart, no decorative elements, no border, no backing tile, no shadow, no gloss, no 3D, no checkerboard painted into image. Output a single icon.
+
+出图与加工备忘（2026-09-22 晚，加粗定稿）：初版环身偏细，同日由 Codex 重出加粗变体
+定稿（原稿 1024×1024 居中占 80%，exploration-v4/source-raw-bold-1024.png，同目录
+standard/fuller 两个落选备选一并存档）；exploration-v4/process_bold.py 清理 alpha<64
+噪点与贴边品红色差描边（MinFilter 腐蚀 1px + 高斯回软，RGB 不动）。上段为该设计的
+等效生成提示词（非出图原 prompt）。初版加工链路见 process.py / source-raw-1254.png。
+最终母版（同日晚）按用户要求改回**未加工原稿直出**，process_bold.py 清理链路仅保留备查。
+2026-09-23：母版换用 balanced 变体（环身介于 standard 与 bold 之间，内容占 ~86%），
+仍为未加工原稿直出（exploration-v4/source-raw-balanced-1024.png）。
+2026-09-23（晚）：母版换用 gradient-ring 完整闭环变体（无缺口/灰轨/绿点，对角渐变
+蓝 #4C7EF9 → 紫 #B43BFB），仍为未加工原稿直出
+（exploration-v4/source-raw-gradient-ring-1024.png）。

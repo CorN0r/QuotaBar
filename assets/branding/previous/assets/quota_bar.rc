@@ -1,0 +1,39 @@
+// QuotaBar 资源：图标 + 版本信息。图标由 tools/gen_icon.ps1 生成；
+// 若缺失，rc 失败会被 build.bat 忽略（托盘图标在运行时绘制）。
+#include <winver.h>
+
+#define APP_VER_F 1,1,0,0
+#define APP_VER_S "1.1.0.0"
+#define IDI_QUOTABAR 102
+
+IDI_QUOTABAR ICON "quota_bar.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION APP_VER_F
+ PRODUCTVERSION APP_VER_F
+ FILEFLAGSMASK 0x3fL
+ FILEFLAGS 0x0L
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_APP
+ FILESUBTYPE 0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "080404b0"
+    BEGIN
+      VALUE "CompanyName", "QuotaBar"
+      // 版本信息字段保持 ASCII：rc.exe 对源文件编码解释不可控(ANSI→乱码)，
+      // 设置"启动应用"列表读此字段，非 ASCII 描述在部分环境会显示乱码。
+      VALUE "FileDescription", "QuotaBar - Kimi/DeepSeek quota display"
+      VALUE "FileVersion", APP_VER_S
+      VALUE "InternalName", "QuotaBar"
+      VALUE "OriginalFilename", "QuotaBar.exe"
+      VALUE "ProductName", "QuotaBar"
+      VALUE "ProductVersion", APP_VER_S
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0804, 1200
+  END
+END
