@@ -1231,6 +1231,325 @@ void TestCodexParse(T& t) {
             "codex: 快照序列化往返保留百分比字段");
 }
 
+// ---------- Antigravity（本机 hub RetrieveUserQuotaSummary 真机样本锁定 2026-11-27） ----------
+// 真机样本 experiments/ag_probe/ag_response.json（文案字段截短;字段名/数值/数组序原样）
+std::string AgBodyReal() {
+    return R"({"response":{"groups":[
+        {"displayName":"Gemini Models","description":"Models within this group: ...","buckets":[
+          {"bucketId":"gemini-weekly","displayName":"Weekly Limit Remaining","description":"...",
+           "window":"weekly","remainingFraction":0.86472285,"resetTime":"2026-12-03T11:52:46Z"},
+          {"bucketId":"gemini-5h","displayName":"Five Hour Limit Remaining","description":"...",
+           "window":"5h","remainingFraction":0.48366153,"resetTime":"2026-11-27T08:14:17Z"}]},
+        {"displayName":"Claude and GPT models","description":"Models within this group: ...","buckets":[
+          {"bucketId":"3p-weekly","displayName":"Weekly Limit Remaining","window":"weekly","remainingFraction":1},
+          {"bucketId":"3p-5h","displayName":"Five Hour Limit Remaining","window":"5h","remainingFraction":1}]}],
+        "description":"Within each group, models share a weekly limit and a 5-hour limit."}})";
+}
+
+void TestAntigravity(T& t) {
+    const int64_t now = NowUnix(), mono = NowMono();
+    const size_t npos = std::wstring::npos;
+
+    // ---- 请求规格 / 分派表 ----
+    const ProviderOps& aops = ProviderOpsOf(AccountType::Antigravity);
+    t.check(std::string(aops.id) == "antigravity" && aops.badge == L'A' &&
+                !aops.uses_api_key && aops.local_hub &&
+                std::string(aops.contract) == kAntigravityContract &&
+                std::wstring(aops.type_tag).size() > 1 &&
+                std::wstring(aops.subtitle).size() > 1,
+            "ag: 分派表行 id/徽章/无 Key/本机 hub/契约/类型章/副题");
+    auto spec = BuildAntigravityRequest("http://127.0.0.1:48342");
+    t.check(spec.url == "http://127.0.0.1:48342/exa.language_server_pb.LanguageServerService/"
+                        "RetrieveUserQuotaSummary" &&
+                spec.method == "POST" && spec.body == "{}" && !spec.auth_bearer &&
+                std::string(spec.auth_header) == "x-codeium-csrf-token",
+            "ag: 请求 = 现场基址 + 固定 RPC 路径,POST {},CSRF 令牌头");
+    auto kspec = BuildKimiRequest("http://127.0.0.1:1"); // 基址参数对固定地址 provider 必须无影响
+    t.check(kspec.url == "https://api.kimi.com/coding/v1/usages" && kspec.method == "GET" &&
+                kspec.body.empty() && std::string(kspec.auth_header) == "Authorization" &&
+                !BuildGlmRequest("x").auth_bearer,
+            "ag: 既有 provider 请求规格不随基址参数改变（GET/无体/Authorization）");
+    t.check(ProviderSingleCard(AccountType::Antigravity) &&
+                ProviderSingleCard(AccountType::Codex) &&
+                !ProviderSingleCard(AccountType::Kimi) && !ProviderSingleCard(AccountType::Glm) &&
+                !ProviderSingleCard(AccountType::Deepseek),
+            "ag: 无 Key 类仅一张卡片,其余可多卡");
+    t.check(ProviderAlertCapable(AccountType::Antigravity) && ProviderAlertCapable(AccountType::Glm) &&
+                ProviderAlertCapable(AccountType::Kimi) &&
+                !ProviderAlertCapable(AccountType::Codex) &&
+                !ProviderAlertCapable(AccountType::Deepseek),
+            "ag: 预警资格 = 比例窗口类（codex/deepseek 维持不参与）");
+    t.check(std::string(ProviderOpsByBadge(L'A').id) == "antigravity" &&
+                std::string(ProviderOpsById("antigravity")->default_alias) == "Antigravity" &&
+                ProviderOpsById("antigravity")->local_hub && !ProviderOpsOf(AccountType::Codex).local_hub,
+            "ag: 按 id/徽章查表;本机 hub 标志仅 antigravity 置位");
+
+    // ---- 解析器：真机样本 ----
+    ParseResult r = ParseAntigravityResponse(AgBodyReal(), now, mono);
+    auto find = [](const ParseResult& pr, const char* key) -> const QuotaWindow* {
+        for (const auto& w : pr.windows)
+            if (w.stable_key == key) return &w;
+        return nullptr;
+    };
+    t.check(r.ok && !r.protocol_error && r.windows.size() == 4 && r.completeness == "full",
+            "ag: 真机样本四桶全解析,Gemini 池齐备 = full");
+    const QuotaWindow* w5 = find(r, "ag_5h");
+    const QuotaWindow* ww = find(r, "ag_week");
+    t.check(w5 && w5->remaining_percent == 48 && !w5->tiny_positive && w5->label == "5h余" &&
+                w5->duration_seconds == 5 * 3600 && w5->period_kind == PeriodKind::Rolling &&
+                !w5->has_limit && w5->availability == Availability::Known && w5->has_reset &&
+                std::fabs(w5->used_percent_raw - 51.633847) < 1e-4,
+            "ag: gemini-5h 0.4836 → 5h余 48%（向下取整,比例口径）+ 重置时刻");
+    t.check(ww && ww->remaining_percent == 86 && ww->label == "7d余" && ww->has_reset &&
+                ww->duration_seconds == 7 * 86400,
+            "ag: gemini-weekly 0.8647 → 7d余 86%");
+    // 服务端数组序原样保留(weekly 在前):显示层必须按 key 取窗,不得按数组序
+    t.check(r.windows.size() == 4 && r.windows[0].stable_key == "ag_week" &&
+                r.windows[1].stable_key == "ag_5h",
+            "ag: 解析保留服务端数组序（weekly 在 5h 之前）");
+    const QuotaWindow* p5 = find(r, "ag_3p_5h");
+    const QuotaWindow* pw = find(r, "ag_3p_week");
+    t.check(p5 && p5->remaining_percent == 100 && !p5->has_reset && pw &&
+                pw->remaining_percent == 100 && !pw->has_reset,
+            "ag: 未动过的 Claude&GPT 桶 100% 且无 resetTime（到期未知）");
+
+    // ---- 解析器：信封变体 ----
+    ParseResult top = ParseAntigravityResponse(
+        R"({"groups":[{"buckets":[{"bucketId":"gemini-5h","window":"5h","remainingFraction":0.5}]}]})",
+        now, mono);
+    t.check(top.ok && top.windows.size() == 1 && top.windows[0].stable_key == "ag_5h" &&
+                top.completeness == "partial",
+            "ag: 顶层 groups 信封兼容,单窗 = partial");
+    ParseResult loose = ParseAntigravityResponse(
+        R"({"buckets":[{"bucketId":"gemini-weekly","window":"weekly","remainingFraction":0.25}]})",
+        now, mono);
+    t.check(loose.ok && loose.windows.size() == 1 &&
+                loose.windows[0].stable_key == "ag_week" && loose.windows[0].remaining_percent == 25,
+            "ag: 顶层 buckets（未分组）兼容");
+
+    // ---- 解析器：proto3 零值省略 / disabled / 钳制 / 未映射池 ----
+    ParseResult zero = ParseAntigravityResponse(
+        R"({"response":{"groups":[{"buckets":[
+            {"bucketId":"gemini-5h","window":"5h","resetTime":"2999-01-01T00:00:00Z"},
+            {"bucketId":"gemini-weekly","window":"weekly","resetTime":"2001-01-01T00:00:00Z"},
+            {"bucketId":"3p-5h","window":"5h","disabled":true},
+            {"bucketId":"3p-weekly","window":"weekly"}]}]}})",
+        now, mono);
+    const QuotaWindow* z5 = find(zero, "ag_5h");
+    t.check(zero.ok && zero.windows.size() == 2 && z5 && z5->remaining_percent == 0 &&
+                !z5->tiny_positive && !find(zero, "ag_week") && find(zero, "ag_3p_5h") &&
+                zero.completeness == "partial",
+            "ag: 零值省略——未过期 reset 佐证为 0%;reset 已过/无佐证 = 跳过;disabled = 0%");
+    ParseResult edge = ParseAntigravityResponse(
+        R"({"response":{"groups":[{"buckets":[
+            {"bucketId":"gemini-5h","window":"5h","remainingFraction":0.004},
+            {"bucketId":"gemini-weekly","window":"weekly","remainingFraction":1.2},
+            {"bucketId":"gemini-argon-wtu-weekly","window":"weekly","remainingFraction":0.6},
+            {"bucketId":"weird","remainingFraction":0.3},
+            {"bucketId":"gemini-5h","window":"5h","remainingFraction":-1}]}]}})",
+        now, mono);
+    const QuotaWindow* e5 = find(edge, "ag_5h");
+    const QuotaWindow* ew = find(edge, "ag_week");
+    t.check(edge.ok && edge.windows.size() == 4 && e5 && e5->tiny_positive &&
+                e5->remaining_percent == 0 && ew && ew->remaining_percent == 100,
+            "ag: 0.4% → <1%（tiny_positive）;>1 钳到 100%;负值 = 无数据跳过");
+    t.check(edge.windows.size() == 4 && edge.windows[2].stable_key == "ag_other_0" &&
+                edge.windows[2].label == "7d余" &&
+                edge.windows[2].duration_seconds == 7 * 86400 &&
+                edge.windows[3].stable_key == "ag_other_1" &&
+                edge.windows[3].period_kind == PeriodKind::Other &&
+                edge.windows[3].label == "未知周期",
+            "ag: 未映射池（argon 等）不猜语义——按 window 归周期,仅进详情");
+
+    // ---- 解析器：错误体 ----
+    ParseResult err = ParseAntigravityResponse(
+        R"({"code":"unauthenticated","message":"unauthenticated: invalid CSRF token"})", now, mono);
+    t.check(!err.ok && err.protocol_error, "ag: Connect 错误体（无 groups/buckets）→ 结构不兼容");
+    t.check(!ParseAntigravityResponse("not json", now, mono).ok &&
+                ParseAntigravityResponse("not json", now, mono).protocol_error,
+            "ag: 非 JSON → 结构不兼容");
+    t.check(ParseAntigravityResponse(R"({"response":{}})", now, mono).protocol_error,
+            "ag: 空响应 → 结构不兼容");
+
+    // ---- 配置：type=4 落盘契约 / 凭证版本恒 1 / 未知类型丢弃 / 默认集不含 ----
+    AppConfig c;
+    t.check(ConfigIo::Load(
+                R"({"config_version":2,"display":{},"query":{},"notify":{},"account_seq":5,"accounts":[)"
+                R"({"id":"acc5","type":4,"alias":"AG","enabled":true,"card_visible":false,"cred_rev":0,"alert_pct":10},)"
+                R"({"id":"acc6","type":5}]})",
+                c) &&
+                c.accounts.size() == 1 && c.accounts[0].type == AccountType::Antigravity &&
+                c.accounts[0].cred_rev == 1 && c.accounts[0].alert_pct == 10 &&
+                !c.accounts[0].card_visible,
+            "ag: type=4 读回为 antigravity,凭证版本恒 1;未知 type 条目丢弃");
+    AppConfig back;
+    t.check(ConfigIo::Load(ConfigIo::Dump(c), back) && back.accounts.size() == 1 &&
+                back.accounts[0].type == AccountType::Antigravity && back.accounts[0].cred_rev == 1,
+            "ag: 配置往返保留类型");
+    bool no_default = true;
+    for (const auto& a : AppConfig::Defaults())
+        no_default = no_default && a.type != AccountType::Antigravity;
+    t.check(no_default && AppConfig::Defaults().size() == 4,
+            "ag: 默认账户集不含 antigravity（按需添加,避免「未运行」噪声卡）");
+
+    // ---- 显示模型四路（常驻行/嵌入条/圆环/详情卡） ----
+    AccountConfig ag;
+    ag.id = "acc5";
+    ag.type = AccountType::Antigravity;
+    ag.alias = "Antigravity";
+    ag.cred_rev = 1;
+    ProviderSnapshot snap = MakeAntigravityTestSnapshot(now);
+    // 标记为"与本次成功同批"的新鲜数据（否则 observed_mono=0 一律按旧数据打 †）
+    for (auto& w : snap.windows) w.observed_mono = mono;
+    snap.last_success_mono = mono;
+    DisplayOptions opt;
+    std::vector<AccountView> views = {{&ag, &snap}};
+    auto flat_of = [&](const DisplayModel& m, size_t row) {
+        std::wstring s;
+        if (row < m.lines.size())
+            for (const auto& sg : m.lines[row]) s += sg.text;
+        return s;
+    };
+    std::wstring flat = flat_of(BuildDisplayModel(views, opt, now, mono, 300), 0);
+    t.check(flat.find(L"Antigravity ") == 0 && flat.find(L"5h余 48%") != npos &&
+                flat.find(L"7d余 86%") != npos &&
+                flat.find(L"5h余 48%") < flat.find(L"7d余 86%") && flat.find(L"100%") == npos,
+            "ag: 常驻行 = 5h 在前、周在后（与服务端数组序相反）;Claude&GPT 池不进常驻");
+    ProviderSnapshot unconf = UnconfSnap(AccountType::Antigravity);
+    t.check(flat_of(BuildDisplayModel({{&ag, &unconf}}, opt, now, mono, 300), 0) ==
+                L"Antigravity 未运行",
+            "ag: hub 未运行 → 「未运行」（不是「待配置」）");
+    ProviderSnapshot off = snap;
+    off.status = FetchStatus::Offline;
+    // "旧值" = 距观测已超过 2× 刷新间隔（新鲜样本离线不打 †,规则同其余平台）
+    off.last_success_mono = mono - 900000;
+    for (auto& w : off.windows) w.observed_mono = mono - 900000;
+    t.check(flat_of(BuildDisplayModel({{&ag, &off}}, opt, now, mono, 300), 0).find(L"†") != npos,
+            "ag: 有旧值 + 离线 → 旧数据标注 †");
+    ProviderSnapshot auth = unconf;
+    auth.status = FetchStatus::AuthError;
+    t.check(flat_of(BuildDisplayModel({{&ag, &auth}}, opt, now, mono, 300), 0) ==
+                L"Antigravity 连接失效",
+            "ag: 无旧值 + 连接失效 → 「连接失效」");
+
+    auto rows = BuildEmbedItems(views, opt, now, mono, 300);
+    std::wstring ev;
+    if (rows.size() == 1)
+        for (const auto& s : rows[0].values) ev += s.text;
+    t.check(rows.size() == 1 && rows[0].name == L"Antigravity" &&
+                rows[0].type == AccountType::Antigravity && ev.find(L"5h 48%") != npos &&
+                ev.find(L"7d 86%") != npos,
+            "ag: 嵌入条值行（标签去「余」,5h/7d）");
+
+    auto rings = BuildRingItems(views, opt, now, mono, 300);
+    t.check(rings.size() == 1 && rings[0].badge == L'A' && rings[0].arc_percent == 48 &&
+                rings[0].center == L"48%" && rings[0].accent == aops.brand_color &&
+                !rings[0].stale,
+            "ag: 圆环 = Gemini 池 5h 窗,品牌色随分派表");
+    auto rings_u = BuildRingItems({{&ag, &unconf}}, opt, now, mono, 300);
+    t.check(rings_u.size() == 1 && rings_u[0].unconfigured, "ag: 未运行 → 灰环");
+
+    auto cards = BuildDetailCards(views, now, 300);
+    t.check(cards.size() == 1 && cards[0].badge == L'A' && !cards[0].uses_api_key &&
+                cards[0].rows.size() == 2 && cards[0].rows[0].label == L"5h" &&
+                cards[0].rows[0].value_text == L"48%" && cards[0].rows[1].label == L"7d" &&
+                cards[0].rows[1].value_text == L"86%" && cards[0].rows[0].ring_percent == 48.0f,
+            "ag: 详情卡两行 = Gemini 池 5h/7d（按 key 排序,非数组序）");
+    t.check(cards.size() == 1 && cards[0].note.find(L"Claude/GPT 池") != npos &&
+                cards[0].note.find(L"5h 100%") != npos && cards[0].note.find(L"周 100%") != npos &&
+                cards[0].note.find(L"其它池") == npos,
+            "ag: Claude&GPT 池额度以注解补全（数值区只放主池两窗）;无未映射池不出现「其它池」");
+    // 未映射池进注解,不进数值区行
+    ProviderSnapshot with_other = snap;
+    QuotaWindow other;
+    other.stable_key = "ag_other_0";
+    other.label = "7d余";
+    other.availability = Availability::Known;
+    other.remaining_percent = 60;
+    other.observed_mono = mono;
+    with_other.windows.push_back(other);
+    auto cards_o = BuildDetailCards({{&ag, &with_other}}, now, 300);
+    t.check(cards_o.size() == 1 && cards_o[0].rows.size() == 2 &&
+                cards_o[0].note.find(L"其它池：7d余 60%") != npos,
+            "ag: 未映射池 → 注解列出,数值区仍只有 Gemini 池两行");
+    auto cards_u = BuildDetailCards({{&ag, &unconf}}, now, 300);
+    t.check(cards_u.size() == 1 && cards_u[0].unconfigured &&
+                cards_u[0].status_text == L"未运行" && cards_u[0].rows.empty() &&
+                cards_u[0].note.find(L"启动 Antigravity") != npos,
+            "ag: 未运行卡给出可行动引导");
+
+    // 历史采样：四条序列（Gemini/Claude&GPT 各 5h+周）,趋势取主窗 ag_5h
+    UsageHistory hist;
+    hist.accounts.push_back(AccountHistory{});
+    hist.accounts[0].account_id = "acc5";
+    RecordSnapshotSamples(hist.accounts[0], ag, snap, now);
+    RecordSnapshotSamples(hist.accounts[0], ag, snap, now + 700);
+    t.check(AccountHasTrend(hist, ag, snap) && hist.accounts[0].windows.size() == 4,
+            "ag: 历史采样四序列,≥2 样本即有趋势");
+
+    // 快照往返（比例字段 + resetTime 有/无）
+    ProviderSnapshot sb;
+    t.check(SnapshotJson::Parse(SnapshotJson::Dump(snap), sb) && sb.windows.size() == 4 &&
+                sb.windows[0].stable_key == "ag_week" && sb.windows[0].has_reset &&
+                sb.windows[1].stable_key == "ag_5h" && sb.windows[1].remaining_percent == 48 &&
+                sb.windows[1].used_percent_raw == 52 && !sb.windows[2].has_reset &&
+                sb.windows[3].stable_key == "ag_3p_5h" && sb.windows[3].remaining_percent == 100,
+            "ag: 快照序列化往返保留比例与重置时刻");
+
+    // ---- 布局：无 Key 类展开卡「重新读取」在卡内（回归:旧布局画到卡外 ~74 DIP） ----
+    {
+        const RECT content{240, 90, 1000, 700};
+        auto valid = [](const RECT& rc) { return rc.right > rc.left && rc.bottom > rc.top; };
+        int sc = 0;
+        ui::QuotaPageIn in;
+        ui::QuotaCardIn cn;
+        cn.expanded = true;
+        cn.uses_api_key = false;
+        cn.alert_capable = true;
+        in.cards.push_back(cn);
+        auto L = ui::ComputeQuotaLayout(in, content, 96, sc);
+        const ui::QuotaCardR& cr = L.cr[0];
+        t.check(valid(cr.ex_codex_sync) && valid(cr.ex_alert) &&
+                    cr.ex_codex_sync.right <= L.cards[0].right - 24 &&
+                    cr.ex_codex_sync.left >= cr.ex_key.right &&
+                    cr.ex_key.right < L.cards[0].right - 24,
+                "ag: 凭证行「重新读取」在卡内,状态框让位");
+        ui::QuotaPageIn in2;
+        ui::QuotaCardIn ck;
+        ck.expanded = true;
+        in2.cards.push_back(ck);
+        auto L2 = ui::ComputeQuotaLayout(in2, content, 96, sc);
+        t.check(!valid(L2.cr[0].ex_codex_sync) && L2.cr[0].ex_key.right == L2.cards[0].right - 24,
+                "ag: API Key 卡无「重新读取」,输入框占满");
+        ui::QuotaPageIn in3;
+        in3.cards.push_back({});
+        in3.add_open = true;
+        auto L3 = ui::ComputeQuotaLayout(in3, content, 96, sc);
+        bool chips = L3.ap_type[0].left >= L3.add_panel.left;
+        for (int i = 0; i < ui::kAddTypeCount; ++i) {
+            chips = chips && valid(L3.ap_type[i]) && L3.ap_type[i].right <= L3.add_panel.right;
+            if (i)
+                chips = chips && L3.ap_type[i].left > L3.ap_type[i - 1].right &&
+                         L3.ap_type[i].right - L3.ap_type[i].left ==
+                             L3.ap_type[i - 1].right - L3.ap_type[i - 1].left;
+        }
+        t.check(chips, "ag: 添加面板五枚 chip 等宽、不重叠、不出面板");
+    }
+
+    // ---- 刷新回显：hub 未运行不谎报「已开始刷新」 ----
+    int kind = -1;
+    std::wstring text;
+    auto sum = SummarizeManualKicks({ManualKick::Started, ManualKick::SourceOffline});
+    ManualKickEchoText(sum, &kind, &text);
+    t.check(sum.started == 1 && sum.source_offline == 1 && kind == 1 &&
+                text.find(L"1 张数据源未运行") != npos,
+            "ag: 刷新回显——已启动 + 未运行尾注");
+    sum = SummarizeManualKicks({ManualKick::SourceOffline});
+    ManualKickEchoText(sum, &kind, &text);
+    t.check(kind == 0 && text == L"Antigravity 未运行：启动并登录后自动连接",
+            "ag: hub 未运行时刷新回显指引");
+}
+
 // ---------- 序列化 roundtrip（内存，不写盘） ----------
 void TestSnapshotRoundtrip(T& t) {
     ProviderSnapshot s = MakeKimiTestSnapshot(NowUnix());
@@ -1263,6 +1582,77 @@ void TestSchedulerBasics(T& t) {
     }
     t.check(true, "sched: 抖动范围 0–10%");
 
+    // 本机 hub 类（antigravity）永不停机:401（hub 重启换了 CSRF 令牌）/连接被拒/坏响应都走
+    // ~60s 重探,而非通用退避或停机等用户——hub 随 Antigravity 启停,状态必须自愈
+    struct HubHost : ISchedulerHost {
+        AppConfig cfg;
+        ProviderSnapshot snap;
+        AppConfig& Cfg() override { return cfg; }
+        size_t AccountCount() override { return cfg.accounts.size(); }
+        const AccountConfig& AccountAt(size_t i) override { return cfg.accounts[i]; }
+        ProviderSnapshot* FindSnap(const std::string& id) override {
+            return id == "acc9" ? &snap : nullptr;
+        }
+        std::string GetKey(const AccountConfig&) override { return "csrf-token"; }
+        std::string GetAccountId(const AccountConfig&) override { return {}; }
+        std::string GetEndpointBase(const AccountConfig&) override {
+            return "http://127.0.0.1:48342";
+        }
+        void OnSnapshotsChanged(bool) override {}
+        void OnNotifyThreshold(const AccountConfig&) override {}
+        bool IsShuttingDown() const override { return false; }
+    } hub;
+    AccountConfig hub_acc;
+    hub_acc.id = "acc9";
+    hub_acc.type = AccountType::Antigravity;
+    hub_acc.cred_rev = 1;
+    hub.cfg.accounts.push_back(hub_acc);
+    auto reset_hub_snap = [&] {
+        hub.snap = ProviderSnapshot{};
+        hub.snap.provider_id = kProviderAntigravity;
+        hub.snap.account_id = "acc9";
+        hub.snap.credential_revision = 1;
+        hub.snap.status = FetchStatus::Fetching;
+    };
+    auto reply = [](Scheduler& sch, int status, bool net_err, const char* body) {
+        HttpResponse r;
+        r.provider_id = kProviderAntigravity;
+        r.account_id = "acc9";
+        r.credential_revision = 1;
+        r.http_status = status;
+        r.network_error = net_err;
+        if (body) r.body = body;
+        sch.OnResponse(std::move(r));
+    };
+    Scheduler hs;
+    hs.Init(&hub, nullptr, nullptr);
+    hs.OnSettingsChanged(); // 同步调度表
+    auto reprobe_soon = [&] {
+        const int64_t ms = hs.NextDeadlineMs();
+        return ms >= 50000 && ms <= 70000; // 60s ±10% 抖动（通用退避首档就是 300s）
+    };
+    reset_hub_snap();
+    reply(hs, 401, false, nullptr);
+    t.check(hub.snap.status == FetchStatus::AuthError &&
+                hub.snap.error_text.find("自动重连") != std::string::npos && reprobe_soon(),
+            "sched: hub 401 → 不断言凭证失效、不停机,~60s 重探");
+    reset_hub_snap();
+    reply(hs, 0, true, nullptr);
+    t.check(hub.snap.status == FetchStatus::Offline &&
+                hub.snap.error_text.find("无响应") != std::string::npos && reprobe_soon(),
+            "sched: hub 连接被拒 → Offline + ~60s 重探（非 5 分钟退避）");
+    reset_hub_snap();
+    reply(hs, 200, false, "{}");
+    t.check(hub.snap.status == FetchStatus::ProtocolError && reprobe_soon(),
+            "sched: hub 坏响应 → ProtocolError 但不停机");
+    reset_hub_snap();
+    std::string real = AgBodyReal();
+    reply(hs, 200, false, real.c_str());
+    t.check(hub.snap.status == FetchStatus::Ok && hub.snap.windows.size() == 4 &&
+                hub.snap.contract_revision == kAntigravityContract &&
+                hub.snap.completeness == "full" && hs.NextDeadlineMs() > 70000,
+            "sched: hub 成功 → 发布快照 + 契约版本,下次按正常刷新间隔");
+
     // 跨账户隔离：旧凭证版本的响应被丢弃
     struct FakeHost : ISchedulerHost {
         AppConfig cfg;
@@ -1276,6 +1666,7 @@ void TestSchedulerBasics(T& t) {
         }
         std::string GetKey(const AccountConfig&) override { return "test-key"; }
         std::string GetAccountId(const AccountConfig&) override { return {}; }
+        std::string GetEndpointBase(const AccountConfig&) override { return {}; }
         void OnSnapshotsChanged(bool /*dirty*/) override { changed = true; }
         void OnNotifyThreshold(const AccountConfig&) override {}
         bool IsShuttingDown() const override { return false; }
@@ -1752,6 +2143,7 @@ int RunSelfTests() {
     TestDeepSeekParse(t);
     TestCodexParse(t);
     TestGlmParse(t);
+    TestAntigravity(t);
     TestJsonBounds(t);
     TestMoney(t);
     TestDisplayModel(t);

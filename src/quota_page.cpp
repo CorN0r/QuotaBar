@@ -112,13 +112,15 @@ void DrawTrendChart(HDC hdc, const RECT& rc, const std::vector<double>& v, bool 
 }
 
 // 添加面板的类型 chips 序（与 g_q.add_type 对应）
-const AccountType kAddTypes[4] = {AccountType::Kimi, AccountType::Codex, AccountType::Glm,
-                                  AccountType::Deepseek};
+const AccountType kAddTypes[ui::kAddTypeCount] = {AccountType::Kimi, AccountType::Codex,
+                                                  AccountType::Glm, AccountType::Deepseek,
+                                                  AccountType::Antigravity};
 const wchar_t* AddTypeLabel(int i) {
     switch (kAddTypes[i]) {
         case AccountType::Codex: return L"Codex";
         case AccountType::Glm: return L"GLM";
         case AccountType::Deepseek: return L"DeepSeek";
+        case AccountType::Antigravity: return L"Antigravity";
         default: return L"Kimi Code";
     }
 }
@@ -127,8 +129,26 @@ const wchar_t* AddTypeKeyPlaceholder(int i) {
         case AccountType::Deepseek: return L"请输入 sk-dsk-... 凭据密钥";
         case AccountType::Glm: return L"请输入智谱 bigmodel.cn API Key...";
         case AccountType::Codex: return L"";
+        case AccountType::Antigravity: return L"";
         default: return L"请输入 sk-kimi-... 凭证密钥";
     }
+}
+const wchar_t* LocalCredentialStatus(AccountType t, bool ready, bool compact) {
+    const bool ag = t == AccountType::Antigravity;
+    if (compact) {
+        if (ag) return ready ? L"hub 已就绪" : L"Antigravity 未运行";
+        return ready ? L"auth.json 已就绪" : L"未登录 Codex";
+    }
+    if (ag) return ready ? L"免填 Key · 本机 Antigravity hub 已就绪（只读）"
+                         : L"未运行 · 启动 Antigravity 并登录后自动连接";
+    return ready ? L"免填 Key · ~/.codex/auth.json 已就绪（只读）"
+                 : L"未就绪 · 终端运行 codex auth login 后自动读取";
+}
+// 展开区安全说明行（无 Key 类）:没有密钥可加密,如实说明凭证由谁维护
+static const wchar_t* LocalCredentialNote(AccountType t) {
+    return t == AccountType::Antigravity
+               ? L"免填 Key：凭证由本机 Antigravity 维护，QuotaBar 只读、不落盘。"
+               : L"免填 Key：令牌由 Codex CLI 维护，QuotaBar 只读、不落盘。";
 }
 
 // 薄包装：从 App 账户状态 + g_q 会话态快照输入，纯计算在 quota_layout.cpp
@@ -143,8 +163,8 @@ QuotaLayout ComputeQuota(App* app, const RECT& content) {
         c.visible = st.cfg.card_visible;
         c.has_trend = app->AccountHasTrendFor(st.cfg.id);
         c.expanded = g_q.IsExpanded(st.cfg.id);
-        c.alert_capable = st.cfg.type == AccountType::Kimi ||
-                          st.cfg.type == AccountType::Glm;
+        c.alert_capable = ProviderAlertCapable(st.cfg.type);
+        c.uses_api_key = ProviderUsesApiKey(st.cfg.type);
         in.cards.push_back(c);
     }
     return ui::ComputeQuotaLayout(in, content, g_layout_dpi, g_q.scroll);
@@ -218,8 +238,9 @@ void PaintQuotaCard(HDC m, App* app, HWND h, const RECT& card, const DetailCard&
         SIZE gsz = Measure(m, tag, theme::TypeSize::Mini, true, bfg);
         RECT tchr{tx + tsz.cx + LS(8), card.top + p + LS(2), tx + tsz.cx + LS(8) + gsz.cx + LS(14),
                   card.top + p + LS(20)};
-        if (tchr.right > hdr_right) tchr.right = hdr_right; // 超宽钳制（窄卡不放章）
-        if (tchr.right > tchr.left + LS(4)) {
+        // 窄卡不放章:放得下才整章画。旧阈值 4 DIP 只够剩一个字——标题行一有状态 chip
+        // （未配置/未运行…）就被钳成「周…」「本」这类残章
+        if (tchr.right <= hdr_right) {
             FillRr(m, tchr, 4, bbg);
             StrokeRr(m, tchr, 4, bbr, 150, 1.0f);
             Txt(m, tchr, tag, theme::TypeSize::Mini, true, bfg, 1, 1, nullptr, alpha);
@@ -415,22 +436,24 @@ void PaintQuotaCard(HDC m, App* app, HWND h, const RECT& card, const DetailCard&
             DrawIconBtn(m, r.ex_key_clear, IcClear, theme::kSOnSurfVar, base + kAccKeyClear,
                         theme::kSSurfHigh, theme::kSError, 16);
         } else {
+            // 无 Key 类凭证行（codex = ~/.codex/auth.json；antigravity = 本机 hub）。状态框与
+            // 「重新读取」按钮同在卡内:按钮右对齐内边距,状态文案用紧凑档（框内仅剩结论宽度）
             Txt(m, RC(card.left + p, r.ex_key.top + LS(9), LS(52), LS(18)), L"凭证",
                 theme::TypeSize::Cap, false, theme::kSOnSurfVar, 0, 0);
             FillRr(m, r.ex_key, 8, theme::kSSurfLow2, 120);
             StrokeRr(m, r.ex_key, 8, theme::kSBorderSoft, 180, 1.0f);
-            const bool ready = app->CodexAuthReady();
-            const wchar_t* pt = ready ? L"免填 Key · ~/.codex/auth.json 已就绪（只读）"
-                                      : L"未就绪 · 终端运行 codex auth login 后自动读取";
-            Txt(m, RECT{r.ex_key.left + LS(12), r.ex_key.top,
-                        r.ex_key.right - LS(8), r.ex_key.bottom},
-                pt, theme::TypeSize::Cap, false,
+            const bool ready = st.cfg.type == AccountType::Antigravity
+                                   ? app->AntigravityHubReady()
+                                   : app->CodexAuthReady();
+            Txt(m, RECT{r.ex_key.left + LS(12), r.ex_key.top, r.ex_key.right - LS(8),
+                        r.ex_key.bottom},
+                LocalCredentialStatus(st.cfg.type, ready, true), theme::TypeSize::Cap, false,
                 ready ? theme::kSSecondary : theme::kSTertiary, 0, 1);
             DrawBtn(m, r.ex_codex_sync, L"重新读取", IcRestart, StyleGhost(),
                     base + kAccCodexSync);
         }
-        // 低额预警阈值行（Kimi/GLM 卡；点击弹档位菜单，即选即存）
-        if (st.cfg.type == AccountType::Kimi || st.cfg.type == AccountType::Glm) {
+        // 低额预警阈值行（比例窗口类卡片；点击弹档位菜单，即选即存）
+        if (ProviderAlertCapable(st.cfg.type)) {
             if (r.ex_alert.right > r.ex_alert.left) {
                 Txt(m, RC(card.left + p, r.ex_alert.top + LS(6), LS(92), LS(18)),
                     L"低额预警阈值", theme::TypeSize::Cap, false, theme::kSOnSurfVar, 0, 0);
@@ -448,14 +471,14 @@ void PaintQuotaCard(HDC m, App* app, HWND h, const RECT& card, const DetailCard&
         }
         // 安全说明行（紧跟展开区最后一行控件；预警行存在时随其下移，避免叠压）
         {
-            const bool has_alert_row =
-                (st.cfg.type == AccountType::Kimi || st.cfg.type == AccountType::Glm) &&
-                r.ex_alert.right > r.ex_alert.left;
+            const bool has_alert_row = ProviderAlertCapable(st.cfg.type) &&
+                                      r.ex_alert.right > r.ex_alert.left;
             const int note_y =
                 (has_alert_row ? r.ex_alert.bottom : r.ex_key.bottom) + LS(8);
             Txt(m, RECT{card.left + p + LS(2), note_y, card.right - p * 2, note_y + LS(18)},
-                L"密钥经 DPAPI 加密存储在本机，不上传云端。", theme::TypeSize::Mini, false,
-                theme::kSOutline, 0, 0);
+                c.uses_api_key ? L"密钥经 DPAPI 加密存储在本机，不上传云端。"
+                               : LocalCredentialNote(st.cfg.type),
+                theme::TypeSize::Mini, false, theme::kSOutline, 0, 0);
         }
         // 按钮：删除卡片（红）/ 保存修改
         RECT del_bg = r.ex_delete;
@@ -568,7 +591,7 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
         Txt(m, RC(x0, box.top + LS(76), cw, LS(24)), L"还没有账户卡片", theme::TypeSize::Head,
             true, theme::kSOnSurf, 1, 0);
         Txt(m, RC(x0, box.top + LS(106), cw, LS(18)),
-            L"点击右上角「添加卡片」，选择 Kimi Code / Codex / GLM / DeepSeek 开始监控",
+            L"点击右上角「添加卡片」，选择 Kimi Code / Codex / GLM / DeepSeek / Antigravity 开始监控",
             theme::TypeSize::Cap, false, theme::kSOutline, 1, 0);
         RECT cta = RC(x0 + cw / 2 - LS(70), box.top + LS(150), LS(140), LS(36));
         DrawBtn(m, cta, L"添加卡片", IcPlus, StylePrimary(), kWAddCard, theme::TypeSize::Cap,
@@ -601,11 +624,11 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
         Txt(m, RC(L.add_panel.left + LS(140), L.add_panel.top + LS(17), LS(400), LS(16)),
             L"选择类型 → 输入账户信息与别名", theme::TypeSize::Cap, false, theme::kSOutline, 0,
             0);
-        // 类型 chips
-        const bool codex_taken = app->Cfg().HasType(AccountType::Codex);
-        for (int i = 0; i < 4; ++i) {
+        // 类型 chips（无 Key 类凭证源全机唯一:已有同类型卡片则置灰）
+        for (int i = 0; i < ui::kAddTypeCount; ++i) {
             const RECT& rc = L.ap_type[i];
-            const bool taken = kAddTypes[i] == AccountType::Codex && codex_taken;
+            const bool taken =
+                ProviderSingleCard(kAddTypes[i]) && app->Cfg().HasType(kAddTypes[i]);
             const bool sel = g_q.add_type == i && !taken;
             FillRr(m, rc, 8, taken ? theme::kSSurfLow2
                                    : (sel ? theme::kSPrimCont : theme::kSSurfHigh));
@@ -613,7 +636,7 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
                 StrokeRr(m, rc, 8, theme::kSCardBorder, 170, 1.0f);
             wchar_t lab[32];
             if (taken)
-                swprintf_s(lab, L"%s（已存在）", AddTypeLabel(i));
+                swprintf_s(lab, L"%s 已存在", AddTypeLabel(i)); // 无全角括号:五枚 chip 变窄后放不下
             else
                 wcscpy_s(lab, AddTypeLabel(i));
             Txt(m, rc, lab, theme::TypeSize::Cap, sel,
@@ -626,8 +649,9 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
         Txt(m, RC(L.add_panel.left + LS(20), L.ap_alias.top + LS(8), LS(52), LS(18)),
             L"别名", theme::TypeSize::Body, false, theme::kSOnSurfVar, 0, 0);
         FillRr(m, L.ap_alias, 8, theme::kSSurfLow2);
-        // Key 行 / codex 免密行
-        if (kAddTypes[g_q.add_type] != AccountType::Codex) {
+        // Key 行 / 无 Key 类免填行（凭证由本机凭证源提供）
+        const AccountType add_type = kAddTypes[g_q.add_type];
+        if (ProviderUsesApiKey(add_type)) {
             Txt(m, RC(L.add_panel.left + LS(20), L.ap_key.top + LS(9), LS(52), LS(18)),
                 L"API Key", theme::TypeSize::Body, false, theme::kSOnSurfVar, 0, 0);
             FillRr(m, L.ap_key, 8, theme::kSSurfLow2);
@@ -644,13 +668,12 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
             Txt(m, RC(L.add_panel.left + LS(20), L.ap_key.top + LS(9), LS(52), LS(18)),
                 L"凭证", theme::TypeSize::Body, false, theme::kSOnSurfVar, 0, 0);
             FillRr(m, L.ap_key, 8, theme::kSSurfLow2, 120);
-            const bool rd = app->CodexAuthReady();
+            const bool rd = add_type == AccountType::Antigravity ? app->AntigravityHubReady()
+                                                                 : app->CodexAuthReady();
             Txt(m, RECT{L.ap_key.left + LS(12), L.ap_key.top, L.ap_key.right - LS(8),
                         L.ap_key.bottom},
-                rd ? L"免填 Key · ~/.codex/auth.json 已就绪（只读）"
-                   : L"未就绪 · 终端运行 codex auth login 后自动读取",
-                theme::TypeSize::Body, false, rd ? theme::kSSecondary : theme::kSTertiary, 0,
-                1);
+                LocalCredentialStatus(add_type, rd, false), theme::TypeSize::Body, false,
+                rd ? theme::kSSecondary : theme::kSTertiary, 0, 1);
         }
         // 错误行
         if (!g_q.add_error.empty())
@@ -658,9 +681,9 @@ void PaintQuota(HDC m, App* app, const RECT& content, HWND h) {
                 theme::kSError, 0, 0);
         // 底部：控制台链接 + 取消/创建
         wchar_t cl[96];
-        swprintf_s(cl, L"控制台：%hs →", ProviderConsoleUrl(kAddTypes[g_q.add_type]));
+        swprintf_s(cl, L"控制台：%hs →", ProviderConsoleUrl(add_type));
         DrawLink(m, L.ap_console, cl, theme::TypeSize::Body, false,
-                 ProviderConsoleUrl(kAddTypes[g_q.add_type]));
+                 ProviderConsoleUrl(add_type));
         DrawBtn(m, L.ap_cancel, L"取消", IcNone, StyleGhost(), kWAddCancel);
         DrawBtn(m, L.ap_create, L"创建卡片", IcCheck, StylePrimary(), kWAddCreate);
     }

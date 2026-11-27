@@ -2,13 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-QuotaBar:Windows 11 x64 单进程额度常驻显示小工具（多账户卡片模型：Kimi Code 周期额度 / DeepSeek API 余额 / Codex 订阅额度 / GLM Coding Plan 额度，每个 coding plan 账户一张卡片，Kimi/GLM/DeepSeek 可加多张，Codex 免密直连限一张）。C++20 + 原生 Win32,透明文字小窗贴靠任务栏 + 托盘图标。设计依据在仓库外的 `outputs/Windows额度插件-开发设计文档.md`(ru-g 目录,由 CMakeLists 注释引用);资源预算、验收清单、公开契约结论都在该文档与 `README.md` 中,改动功能前先读。
+QuotaBar:Windows 11 x64 单进程额度常驻显示小工具（多账户卡片模型：Kimi Code 周期额度 / DeepSeek API 余额 / Codex 订阅额度 / GLM Coding Plan 额度 / Antigravity 订阅额度，每个 coding plan 账户一张卡片，Kimi/GLM/DeepSeek 可加多张，Codex（免密直连 auth.json）与 Antigravity（本机 hub 直连）各限一张）。C++20 + 原生 Win32,透明文字小窗贴靠任务栏 + 托盘图标。设计依据在仓库外的 `outputs/Windows额度插件-开发设计文档.md`(ru-g 目录,由 CMakeLists 注释引用);资源预算、验收清单、公开契约结论都在该文档与 `README.md` 中,改动功能前先读。
 
 ## 构建与测试
 
 ```bat
 build.bat                                    :: 主构建(需 VS2022 BuildTools 的 MSVC,无 CMake 也可)
-D:\Zcode\QuotaBar\build\QuotaBar.exe --selftest   :: 合成自测(295 项,不访问网络、不读写数据目录)
+D:\Zcode\QuotaBar\build\QuotaBar.exe --selftest   :: 合成自测(339 项,不访问网络、不读写数据目录)
 :: 结果:退出码 0=全过;结果追加写 build\selftest.txt(仅真实控制台才打印到屏幕)——文件是 APPEND 语义
 cmake -B build-cmake -G "Visual Studio 17 2022" -A x64   :: 备选构建
 ```
@@ -36,9 +36,9 @@ scheduler(定时器/退避/频率限制) ──→ http_client(WinHTTP 异步) �
 | 模块 | 职责要点 |
 | --- | --- |
 | `app` | 实现 `ISchedulerHost`;隐藏窗口**必须**是顶层窗口(接收 Shell 广播;HWND_MESSAGE 不接收);单实例用命名互斥 + **EnumWindows 按类名查找**隐藏窗(`FindWindow` 对隐藏窗不可靠);系统事件(锁屏/休眠/全屏 WinEvent/网络 NetlistMgr/Explorer 重启/主题/DPI)在此订阅 |
-| `scheduler` | 所有请求唯一入口；**按账户调度**（`std::vector<ProviderSched>` 经 `SyncAccounts` 与 `cfg.accounts` 惰性同步；请求/响应按 `account_id` 路由、按 `provider_id`（平台类型）选解析器）；合并单定时器;退避 5/10/20/30min + 10% 抖动;429 遵守 Retry-After;401/403/404 停机等待用户;停用(`enabled=false`)账户不调度;暂停/锁屏不查询;恢复后 5–15s 随机延迟补查 |
-| `http_client` | 单请求总期限 10s(定时器强制);响应 ≤64 KiB;禁自动重定向;证书校验开启;取消后必须等待 HandleClosing 清理。**WinHTTP 异步读必须用标准模式**:Query 只做推动、读只在 DATA_AVAILABLE 事件里做一次、结束只在 avail==0 单点判定——READ_COMPLETE 内"Query+立即 Read"双路驱动会交错致大响应截断(实测 codex cl=1226 只收 1016-1026B)。请求头带 `Accept-Encoding: identity`(暂不支持自动解压) |
-| `providers` | 四个静态适配器(Kimi/DeepSeek/**Codex**/**GLM**);**`ProviderOps` 分派表(2026-09-18)是"类型→平台行为"唯一真值**(id/契约/徽章/控制台/默认别名/用Key/build/parse 八元组一行一平台;`ProviderOpsOf`按类型、`ProviderOpsById`按id 查表;scheduler 组请求/选解析器/写契约与 providers 五个辅助函数全部查表,**新增 provider=表加一行+各层一处 case**,勿再恢复 if-chain);`kKimiContract = kimi-usages@86f1364`(锁定 kimi-cli 提交),字段漂移时升级契约版本并重新验证。**Kimi 的 limit/used/remaining 是 JSON 字符串数字,必须走 CountField 兼容**(IsNumber 会静默丢窗);`kCodexContract = codex-wham@2026-09-05`(实测锁定):wham/usage 仅百分比+重置时间(无绝对数),窗口标签"5h余/7d余"(用户拍板:7d 与 5h 同构);`kGlmContract = glm-quota-limit@2026-09-12`(探针真机锁定,样本 `experiments/glm_probe/glm_response.json`):智谱 `open.bigmodel.cn/api/monitor/usage/quota/limit`,**Authorization 头不带 Bearer 前缀**(`ProviderRequestSpec::auth_bearer=false` 调度器据此组头),信封 `{code,msg,data,success}`,limits[] 按 `type` 分派——**CREDIT_LIMIT(现网形态)**=绝对点数 usage/currentValue/remaining + `unit`/`number` 窗口时长(实测 (3,5)=5h、(6,1)=周,重置时刻互证;未知组合→"未知周期"仅进详情)+毫秒 `nextResetTime`(ExtractResetTime 自动降为秒);TOKENS_LIMIT/TIME_LIMIT(旧社区形态)保留兼容;percentage 字段是**已用**%但不单独采用,百分比一律走 ComputePercent 计数口径 |
+| `scheduler` | 所有请求唯一入口；**按账户调度**（`std::vector<ProviderSched>` 经 `SyncAccounts` 与 `cfg.accounts` 惰性同步；请求/响应按 `account_id` 路由、按 `provider_id`（平台类型）选解析器）；合并单定时器;退避 5/10/20/30min + 10% 抖动;429 遵守 Retry-After;401/403/404 停机等待用户;停用(`enabled=false`)账户不调度;暂停/锁屏不查询;恢复后 5–15s 随机延迟补查。**本机 hub 类（antigravity,`ProviderOps::local_hub`）永不停机**:缺源（hub 未运行）/401（hub 重启换了 CSRF 令牌）/连接被拒/坏响应一律 `kHubReprobeSec=60s` 短周期重探,不走通用退避（hub 随 Antigravity 启停,5→30 分钟退避会让刚启动它的用户等半小时）;缺源时快照转 Unconfigured（UI 文案「未运行」,暂停态保留「已暂停」）且**只在状态切换时记一条日志**（每次重探都记就是刷屏）;hub 随时可能出现,所以这类账户恒视为已配置、始终进调度;手动刷新在缺源时返回 `ManualKick::SourceOffline`（回显「Antigravity 未运行」,不谎报已开始刷新） |
+| `http_client` | 单请求总期限 10s(定时器强制);响应 ≤64 KiB;禁自动重定向;证书校验开启;取消后必须等待 HandleClosing 清理。**WinHTTP 异步读必须用标准模式**:Query 只做推动、读只在 DATA_AVAILABLE 事件里做一次、结束只在 avail==0 单点判定——READ_COMPLETE 内"Query+立即 Read"双路驱动会交错致大响应截断(实测 codex cl=1226 只收 1016-1026B)。请求头带 `Accept-Encoding: identity`(暂不支持自动解压)。2026-11-27 起支持 **POST+JSON 体**（`ProviderRequestSpec::method/body`:非空体随请求发送并补 `Content-Type: application/json`,体副本存进 Ctx 以活过异步发送期）与**认证头名可配置**（`auth_header`,默认 Authorization;antigravity 用 `x-codeium-csrf-token`;`auth_header` 值为空则整个认证头不发）。**回环地址 WinHTTP 天生不经代理**——会话级指向假代理的对照实验证实（`experiments/ag_probe/winhttp_loopback_proxy_test.ps1`）,hub 请求无需按请求覆盖代理（AUTOMATIC_PROXY 会话上 `WINHTTP_OPTION_PROXY` 本也不可设,12011） |
+| `providers` | 五个静态适配器(Kimi/DeepSeek/**Codex**/**GLM**/**Antigravity**);**`ProviderOps` 分派表(2026-09-18)是"类型→平台行为"唯一真值**(id/契约/徽章/控制台/默认别名/用Key/build/parse 八元组一行一平台;`ProviderOpsOf`按类型、`ProviderOpsById`按id 查表;scheduler 组请求/选解析器/写契约与 providers 五个辅助函数全部查表,**新增 provider=表加一行+各层一处 case**,勿再恢复 if-chain);`kKimiContract = kimi-usages@86f1364`(锁定 kimi-cli 提交),字段漂移时升级契约版本并重新验证。**Kimi 的 limit/used/remaining 是 JSON 字符串数字,必须走 CountField 兼容**(IsNumber 会静默丢窗);`kCodexContract = codex-wham@2026-09-05`(实测锁定):wham/usage 仅百分比+重置时间(无绝对数),窗口标签"5h余/7d余"(用户拍板:7d 与 5h 同构);`kGlmContract = glm-quota-limit@2026-09-12`(探针真机锁定,样本 `experiments/glm_probe/glm_response.json`):智谱 `open.bigmodel.cn/api/monitor/usage/quota/limit`,**Authorization 头不带 Bearer 前缀**(`ProviderRequestSpec::auth_bearer=false` 调度器据此组头),信封 `{code,msg,data,success}`,limits[] 按 `type` 分派——**CREDIT_LIMIT(现网形态)**=绝对点数 usage/currentValue/remaining + `unit`/`number` 窗口时长(实测 (3,5)=5h、(6,1)=周,重置时刻互证;未知组合→"未知周期"仅进详情)+毫秒 `nextResetTime`(ExtractResetTime 自动降为秒);TOKENS_LIMIT/TIME_LIMIT(旧社区形态)保留兼容;percentage 字段是**已用**%但不单独采用,百分比一律走 ComputePercent 计数口径。`kAntigravityContract = antigravity-quota-summary@2026-11-27`(真机锁定,样本 `experiments/ag_probe/ag_response.json`):**查的是本机 Antigravity hub 的 Connect RPC**——`POST http://127.0.0.1:<httpPort>/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary`,头 `x-codeium-csrf-token`,体 `{}`;**不是 Google 端点**,OAuth 由 hub 代劳,QuotaBar 全程不接触令牌。基址端口随 hub 重启变化:经 `build_request(local_base)` 的入参现场传入（宿主 `ISchedulerHost::GetEndpointBase`;其余 provider 忽略该参数）。响应 `{response:{groups[{buckets[{bucketId,window,remainingFraction,resetTime?}]}]}}` 按 bucketId 分派——gemini-5h→`ag_5h`、gemini-weekly→`ag_week`（Gemini 池:常驻条/圆环/卡片主窗）、3p-5h→`ag_3p_5h`、3p-weekly→`ag_3p_week`（Claude&GPT 池:仅详情注解）,其余桶→`ag_other_N`（按 window 归周期,不猜语义,注解里列出）。三点与直觉相反:**组内 weekly 排在 5h 之前,不可按数组序**;没动过的桶（剩余 1.0）**没有 resetTime**;额度耗尽时 remainingFraction 是 proto3 零值被**整个字段省略**（以 disabled 或未过期 resetTime 佐证为 0%,二者皆无=无数据跳过）。信封兼容顶层 groups / 顶层 buckets。另有两个判定函数也在此层:`ProviderSingleCard`（无 Key 类凭证源全机唯一,只能一张卡）与 `ProviderAlertCapable`（比例窗口类 Kimi/GLM/Antigravity 参与阈值预警;codex 历史上不参与,勿顺手"补全"）——卡片阈值行、条上低额变色、阈值通知、添加面板共用 |
 | `state` | 快照 + 新鲜度 + 显示模型;**账户列表输入**（2026-09-14 起）:`AccountView{cfg,snap}` 向量进 `BuildDisplayModel/BuildEmbedItems/BuildRingItems/BuildDetailCards`,每账户一行/一环/一卡,**首段恒为「别名 」前缀段**（嵌入条按此拆名称行/值行）;调用方决定集合——常驻条/圆环/托盘提示传 `enabled` 账户,详情页传 `card_visible` 账户;别名:显示层按 `kimi_weekly` 精确 key 和 `kimi_rolling_...s` 前缀匹配滚动窗口;详情各窗口行尾用 `reset_part` 显示"到期：还有 X(绝对时间)"倒计时,粒度按窗口时长(≤24h→分钟,否则小时;`FormatRemainingZh`);**圆环模式**(Rings,2026-09-12):`BuildRingItems` 产环条目(环弧=5h 剩余比例/环心=数值/徽章=别名首字符+类型品牌色),配色自包含固定亮色(overlay 垫半透明深色圆盘,不随壁纸/主题反转),定位沿用吸附锚定(见 overlay 2026-09-21);环心文字必须 MeasureString 后按点绘制——矩形排布在宽度临界时丢末字符("¥22"→"¥2" 实测);**横幅直绘屏幕 DC 会闪烁**:30fps 下"填背景→画粒子→画标题"分步执行,DWM 中途合成采样到半成品帧,表现为标题区持续闪烁——必须双缓冲(整帧绘入内存位图,一次 BitBlt 上屏,详情窗 PaintDetail 实测修复);**被遮挡窗口显示后必须补一次 InvalidateRect**(遮挡期间首帧会被 DWM 丢弃,实测空窗);`BuildDetailText` 已随「复制全部」删除（2026-09-14）,文本断言基线改用 `BuildDetailCards` |
 | `taskbar_slot` | 嵌入槽(display.mode=Embed):顶层 WS_POPUP 创建后 SetParent;D2D+DComposition 合成交换链;嵌入布局默认两行(名称行大字/值行 0.8×,列宽=max(名,值),列距 kColGapDip;`embed_show_names=false` 时单行只渲染值行,窗口高减半);锚定链 ①贴天气估算右缘(kWeatherWidthDip=115,用户实机 25℃ 组件实测 98DIP + 变长缓冲)②簇右缘 ③托盘;**软界自适应**:内容超常规 30DIP 留白时放宽到 4DIP(kMinPadDip);`slot_offset_x_dip` 用户水平偏移(±200 钳制,显示设置页滑杆实时微调)。**锚定/偏移/软界的次序(2026-09-12 踩坑)**:可用宽必须按"偏移后的实际 x0"到两道界的距离判定——先应用 slot_offset 再判常规界/软界;若按旧写法先判宽再算 `avail=right_lim(常规界)-x0`,用户一旦设过偏移(实测 32DIP)软界放宽就被整行吞掉,可用宽虚减 26DIP,四平台内容超界 → 列挤压 → `TruncateSlotSegs` 从尾部丢段(表现:"周"额度消失)。锚定链封装为两遍执行:字号收缩后内容变窄,第二遍复评常能进软界。仍放不下才列挤压+尾段截断兜底 |
 | `theme` | 现代深色主题(2026-09-12 重构为设计 token + 绘制原语):`ApplyWindowChrome`=Win11 圆角+深色标题栏/边框(DWM 属性,旧系统静默忽略);`ModernizeDialog`=对话框统一深色(EDIT/复选/单选走 DarkMode_Explorer 尽力而为)+**按钮手动子类化自绘**(SetProp 存原过程,刻意不用 SetWindowSubclass 以免依赖 comctl32 v6 清单);**子类化后按下/抬起不得转发原过程**(实测:转发 WM_LBUTTONDOWN 后原生按钮的捕获逻辑立刻发 WM_CAPTURECHANGED 重置自绘 pressed 标志,抬起被判"未按下",点击静默丢失——设置保存点不动;修法=按下/抬起 return 0 完全自管,其余消息照常转发);`HandleDialogMessage`=对话框 WM_ERASEBKGND/CTLCOLOR* 统一深色,各对话框过程入口调用;公共像素原语 `DrawTextPx/MeasureTextPx/FillRoundRectPx/StrokeRoundRectPx/FillEllipsePx/FillGradientPx/DrawRingPx/DrawBadgePx`(详情卡片/按钮/圆环共用,token 调色板在 theme.hpp 单一来源;**品牌色 K/D/C/G 已迁 providers.hpp ProviderOps.brand_color**——2026-09-18 起 theme 只留随主题变的 token);**按钮文字必须用像素字号(UnitPixel)**——UnitPoint 依赖 Graphics DPI,且 `GetDpiForWindow` 在个别路径返回 0 → 字号归零文字静默消失(实测);`AnimationsEnabled()`(SPI_GETCLIENTAREAANIMATION)为假时跳过一切 AnimateWindow;`EnableDarkSystemChrome()`(uxtheme 序数 135/136)启动调用一次让弹出菜单跟随深色;详情窗/对话框 AnimateWindow 淡入淡出 |
@@ -55,6 +55,7 @@ scheduler(定时器/退避/频率限制) ──→ http_client(WinHTTP 异步) �
 - **金额**只走 `Decimal` 定点;禁止二进制浮点加减;`FormatMoney` 处理 `<0.01` 展示;余量 0–1% 用 `tiny_positive`(`<1%`),不许显示成 0%。(例外:历史 spark/速率拟合用 double,仅绘图不参与金额业务)
 - **DPI**:进程为 PerMonitorV2 感知,系统不自动缩放 —— `tray_ui` 的对话框用 `g_layout_dpi`(96 DIP 设计值 × LayoutScale),`overlay` 用自己的 `Scaled()`;对话框/详情窗创建后必须先 `SetLayoutDpi` 再创建子控件,否则高缩放下控件挤压重叠(实测过的崩溃点)。
 - **日志脱敏**:不写 Key/Token/Authorization/完整响应;默认只记状态转移与错误。
+- **本机凭证类（无 API Key:codex / antigravity,`ProviderOps::uses_api_key=false`）**:凭证每次请求**现场读本机凭证源**（`~/.codex/auth.json` / `~/.gemini/<product>/daemon/hub_*.json`）,不缓存;`cred_rev` 恒 1;不进 secrets.dat（占位空段保持对齐）;**不进磁盘 cache**（本机凭证源可能已换账户,旧快照不得冒充）。`GetKey` 为空:codex = 未登录,antigravity = hub 未运行——后者仍保持调度（`local_hub`）,由 `StartFetch` 的缺源分支短周期重探。UI 里所有"是不是 codex"的判断 2026-11-27 起一律改查 `ProviderUsesApiKey`/`ProviderSingleCard`/`ProviderAlertCapable`,**不要再写 `type == AccountType::Codex` 特判**（现存的那几处是 Codex 专属语义:auth.json 令牌与 ChatGPT 账户身份锚）。
 
 ## 配置映射与界面行为备忘(跨文件才知道)
 
@@ -64,7 +65,7 @@ scheduler(定时器/退避/频率限制) ──→ http_client(WinHTTP 异步) �
 - **额度页滚动**:内容(添加面板/隐藏区/卡片墙)整体随 `g_q.scroll` 平移,页头按钮固定;`ComputeQuota` 统一钳制并应用偏移,`WM_MOUSEWHEEL` 调整后必须 `Relayout()`(原生 EDIT 随滚动重摆,否则输入框与自绘底错位)。**滚动视口裁剪(2026-09-19 修"下滚卡片盖住标题栏/最小化按钮")**:PaintQuota 的滚动段整体包 `SaveDC+IntersectClipRect`,视口=`{content.left, content.top+LS(kQuotaHeadDip), content.right, content.bottom}`(52 DIP=页头高,与 quota_layout 的 after_head 同源);命中注册经 `g_hit_clip` 裁到可见部分(`ui::ClipHitRect`,完全滚出不注册)——不留"看不见却可点"的幽灵命中带(否则标题栏拖拽区被滚上去的卡片命中吞掉);PaintDetail 额度页 `g_hit_vp` 同矩形、`g_hit_extra`=页头带(隐藏 chip/刷新/添加在视口上方靠它保持可点);Relayout 的 qvp 同矩形隐藏滚出视口的 EDIT;绘制/命中/EDIT 三处矩形必须同步。拖拽插入线 y 钳到视口顶(非 content.top)保持可见。**「刷新」按钮(2026-09-16 从标题栏移来)**=页头「已隐藏」chip 与「添加卡片」之间的图标按钮,`kWRefresh` 命中只由 `PaintQuota` 注册(显示设置页自然没有);标题栏只剩最小化/最大化/关闭。显示设置页滚动用独立的 `g_dscroll`,滚轮处理按 `self->page()` 分流。
 - **GDI+ DrawString 不裁文本**:GenericTypographic 布局框宽度超限直接画出去(band 元信息与右邻链接重叠,实测)——长文本入框前自行逐字裁剪加 "…";同样地,`DrawBtn` 文本超按钮宽自动省略号,按钮宽度须按最大文案预留(设置按钮 64 DIP 在 200% 缩放截成"设...",实机改 84)。
 - **低额度提醒带滞回**:只在跨阈值边沿提醒一次(恢复再跌破才再次触发);滞回状态**逐账户**存 `App::notify_below_`。百分比窗口(Kimi/GLM 型)共用 `kimi_threshold_pct` 一个阈值,金额账户(DeepSeek 型)用 `deepseek_threshold_cny`。
-- **JSON 裸整数映射**(勿凭 C++ 枚举猜 config):`display.mode` 0=Docked(**已并入 Free:2026-09-21 起读取时迁移为 Free+`bar_snap=true`,UI 不再产生**) 1=Free(浮条) 2=TrayOnly 3=Embed(任务栏内嵌) 4=Rings(圆环);`bar_snap` 浮条吸附任务栏上缘右端(拖近自动吸附,吸附偏移 `bar_snap_x/y`;Rings 恒吸附共用 `bar_snap_x`);`text_color_mode` 0=自动(按 `AppsUseLightTheme`;深色主题→黑字,黑壁纸上近乎不可见,排查显示问题先切 1=白)1=白 2=黑;`low_quota_color` 低额变色开关(默认 true;关=值段恒基色,「需更新密钥」等状态告警色不受影响);`brand_color_names` 账户名品牌色(默认 false);`embed_show_names`/`embed_show_windows` 嵌入条名称行/窗口标签(默认 true);`slot_offset_x_dip` 嵌入条水平偏移(±200,正=右);`accounts[].type` 0=Kimi 1=Codex 2=Glm 3=Deepseek;**`accounts[].alert_pct` 0=继承全局 1=关闭 5..95=自定义阈值%**(2026-09-15 B 迭代);`notify.reset_reminder` 重置恢复提醒开关(默认 true)。
+- **JSON 裸整数映射**(勿凭 C++ 枚举猜 config):`display.mode` 0=Docked(**已并入 Free:2026-09-21 起读取时迁移为 Free+`bar_snap=true`,UI 不再产生**) 1=Free(浮条) 2=TrayOnly 3=Embed(任务栏内嵌) 4=Rings(圆环);`bar_snap` 浮条吸附任务栏上缘右端(拖近自动吸附,吸附偏移 `bar_snap_x/y`;Rings 恒吸附共用 `bar_snap_x`);`text_color_mode` 0=自动(按 `AppsUseLightTheme`;深色主题→黑字,黑壁纸上近乎不可见,排查显示问题先切 1=白)1=白 2=黑;`low_quota_color` 低额变色开关(默认 true;关=值段恒基色,「需更新密钥」等状态告警色不受影响);`brand_color_names` 账户名品牌色(默认 false);`embed_show_names`/`embed_show_windows` 嵌入条名称行/窗口标签(默认 true);`slot_offset_x_dip` 嵌入条水平偏移(±200,正=右);`accounts[].type` 0=Kimi 1=Codex 2=Glm 3=Deepseek 4=Antigravity（数值是落盘契约,**只在末尾追加**;`ConfigIo::Load` 的上界跟 `kAccountTypeCount` 走——新增类型忘了放宽会被当未知条目静默丢弃）;**`accounts[].alert_pct` 0=继承全局 1=关闭 5..95=自定义阈值%**(2026-09-15 B 迭代);`notify.reset_reminder` 重置恢复提醒开关(默认 true)。
 - **清除入口**:显示设置页「清除数据」chip 清 cache/secrets/config/history(账户列表复位为 4 张默认卡);普通退出保留配置。首次运行(无 `first_run_done`)自动打开主窗口并展开「添加卡片」面板。
 
 ## 已知状态(避免重复踩坑)
@@ -79,6 +80,7 @@ scheduler(定时器/退避/频率限制) ──→ http_client(WinHTTP 异步) �
 - **性能门槛(§12)部分实测(2026-09-06,20 分钟采样)**:working set 稳定 68.4 MB/私有 66.9 MB,无增长;CPU 20 分钟累计 1.19s(≈0.1%);exe 587 KiB。**8 小时长稳仍未测**。
 - **P0 真实账户联调已完成(2026-09-05/06)**:Kimi 字符串数字、DeepSeek is_available 拆账、Codex wham 百分比口径均已实机核对,结论回写 README;契约版本 `kKimiContract/kDeepSeekContract/kCodexContract` 已锁定。
 - **GLM provider(2026-09-12 接入并真机联调)**:端点 `open.bigmodel.cn/api/monitor/usage/quota/limit`。三点与"常识"不同须记住:①Authorization 头是裸 Key 无 Bearer 前缀(`auth_bearer=false`);②**首版按社区样本(TOKENS_LIMIT/TIME_LIMIT)实现,真机返回的却是 CREDIT_LIMIT**——社区工具的样本是旧 API 形态,字段漂移后解析出 0 窗口报"结构不兼容",靠协议错误日志的 8 字节头 hex + `experiments/glm_probe/probe_usage.ps1`(DPAPI 读 Key 发同款请求导出响应)拿到真机样本修正;③窗口时长看 `unit`+`number` 字段而非数组序(实测 (3,5)=5h、(6,1)=周,`nextResetTime` 毫秒互证)。国际版 Z.AI(api.z.ai)同路径未接入,当前仅国内 bigmodel.cn。**联调协议错误排查路径**:日志 hdr hex → glm_probe 导出真实响应 → 比对解析器。
+- **Antigravity provider(2026-11-27 接入并真机联调)**:额度查的是**本机 Antigravity hub**,不是 Google（契约见 providers 行;探针与隔离联调工具在 `experiments/ag_probe/`）。几条踩过或差点踩的坑:①**本机是 Electron 新架构**（`Antigravity.exe` + `language_server.exe --override_ide_version 2.35.2`,数据在 `~/.gemini/`）,社区文章里 VS Code fork 时代的 `~/.codeium/antigravity/auth_token` 根本不存在,磁盘上也没有可直接用的 OAuth 令牌——契约必须以本机为准（`~/.gemini/config/plugins/usage-monitor/` 里的官方插件源码 `ls-discovery.mjs`/`ls-rpc.mjs`/`quota-pools.mjs` 是现成的参照实现）;②hub 描述文件**退出不清理**,本机残留多份,`FindAntigravityHub` 按 pid 存活筛选再取 mtime 最新（pid 缺失时放行,错文件至多换来一次连接被拒）;③hub 的 401 不是"凭证失效"而是"刚重启换了令牌",若按通用语义停机等用户,Antigravity 每次重启都得手动救——所以 local_hub 类永不停机;④它**不在默认账户集**（需本机装着并运行 Antigravity,对不用的用户只是一张「未运行」噪声卡）,经「添加卡片」按需创建;⑤Antigravity 退出后,嵌入条上的数值要到**下一次定时刷新**才变「未运行」（轮询语义,与其它数据源一致）,不是实时的;⑥社区另报道的直连路线（`daily-cloudcode-pa.googleapis.com`,要自己拿 OAuth 令牌且 User-Agent 版本段决定返回哪些桶）未采用。**联调不要碰真实数据目录**:用 `experiments/ag_probe/qb_sandbox.py` 起隔离 profile（单实例互斥量按会话计,得先退出真实实例,联调完**立刻把真实实例拉回来**——它跑的就是 `build\QuotaBar.exe`）;其它联调手段的坑（taskkill 软关闭不可靠、锁屏下合成点击无效且与版本无关等）见该目录 README。
 - **ULW 顶层渲染在本机验证可用(2026-09-05 复测,产物 `experiments/ulw_probe/`)**:早先「ULW 本机整体失效」结论**不可复现**。实测矩阵(顶层窗口,PMv2 @200%,GDI+/ULW/色键/普通 GDI 四路径对照 + 用户肉眼 + 截屏三方一致):① 顶层 `UpdateLayeredWindow` 逐像素 alpha **完全正常**——位置/尺寸/颜色/alpha 均正确,含与 overlay 同款管线(GDI+ PARGB 包裹 DIB + DrawString 文字)与「先 Paint 后 Show」次序;② 普通 GDI 与色键顶层窗口同样正常,**但隐藏窗口 DC 的预绘制在首次 ShowWindow 时会被丢弃**(实测内容丢失、合成为空窗透出壁纸;显示后重绘即恢复)——DWM 时代绘制须走 WM_PAINT/显示后重绘,ULW 自带 surface 不受此限;③ **实机 docked 验收已过**(同日,test_mode 合成数据):overlay 在任务栏右端上方正常显示两行文字(用户肉眼确认),位置/尺寸随内容右对齐正确。勿再引用旧「ULW 整体失效」说。
 - **深色主题下 overlay 黑字黑底注意**:`text_color_mode=0`(自动)按 `AppsUseLightTheme` 判定字色;本机深色主题 → 黑字,黑壁纸/任务栏上方几乎不可见(曾误判为"没渲染")。验收/排查时切 `text_color_mode=1`(白字)可排除此干扰。
 - **父化到 Shell_TrayWnd 的渲染本机不稳定(2026-09-05 复测)**:父化 ULW 子窗口不可见(与早先一致),但**父化色键子窗口复测当日也不合成**(截屏无内容,与早先「色键通过」记录矛盾;当日 crop.png 同样无内容,旧结论疑为目检误判或环境瞬态)。任务栏内嵌方向不变:**勿依赖父化分层窗口,生产渲染仍走 D2D+DComposition**(TrafficMonitor 同款,未验证),落地前须在实机肉眼验收。
@@ -394,3 +396,42 @@ R8-2 实证生效）；发行 zip 产物完整。
 - **坑：脚本按设计稿 780 DIP 估页脚坐标会点空**——窗口外框经 AdjustWindowRectEx 加框后
   SetWindowPos 只缩不放，客户区=整窗矩形（本机实测 ≈818 DIP 高）≠ 设计高；页脚点击一律
   GetClientRect 运行时反推（save=(dipW-75, dipH-26)、discard=(dipW-188, dipH-26)）。
+
+## 2026-11-27 Antigravity 接入（295→339 项自测全绿）
+
+新增第五个数据源 Google Antigravity（经本机 hub,免填 Key）。路线取舍与踩坑见「已知状态」
+的 Antigravity 条目和 `experiments/ag_probe/README.md`,此处只记代码落点:
+
+- **`AccountType` 末尾追加 `Antigravity`(=4)**、`kAccountTypeCount` 取代散落的魔数 4
+  （provider_icons 定长表、config 类型上界、添加面板 chip 数 `ui::kAddTypeCount`）。
+  既有测试夹具是「默认账户集 × `snaps[4]`」按 `accs.size()` 遍历——antigravity 没进默认集,
+  所以那些夹具原样有效;以后再往默认集加类型务必同步扩这些数组,否则越界读。
+- **`ProviderOps` 表加一行 + 两个列/判定**:`local_hub`（本机 hub 数据源标志,调度器据此
+  改走短重探、永不停机）;`build_request` 签名改为带 `local_base` 入参（其余四个忽略）;
+  `ProviderSingleCard`/`ProviderAlertCapable`。`ProviderRequestSpec` 新增 `method/body/auth_header`。
+- **宿主接口**新增 `ISchedulerHost::GetEndpointBase`（antigravity 返回现场解析的
+  `http://127.0.0.1:<httpPort>`,其余返回空）;`App::FindAntigravityHub` 扫四个产品目录的
+  `daemon/hub_*.json`。`ManualKick` 新增 `SourceOffline` 态与对应回显文案。
+- **`AppendKeyedPercentLine`**（state.cpp 匿名空间）:把 GLM 分支的"按 key 取比例窗口值段"
+  抽成带文案参数的共用函数,GLM 与 Antigravity 共用（防第五份复制粘贴漂移;GLM 行为不变,
+  由既有 display/embed/ring 用例回归）。`push_ordered_rows` 增加 `max_rank` 参数——
+  Antigravity 只取主池两窗进数值区,Claude&GPT 池与未映射池进 ⓘ 注解（此前"其余"窗口会
+  作为第三行推进 rows,虽然绘制只画前两格,但语义是错的）。
+- **无 Key 类判定收敛**:app/storage/detail_shell/quota_page 里十几处 `type == Codex` /
+  `!= Codex` 改查 `ProviderUsesApiKey`/`ProviderSingleCard`/`ProviderAlertCapable`;
+  凭证行文案抽成 `LocalCredentialStatus(type, ready, compact)`,安全说明行随类型。
+- **顺手修的既有布局问题**（无 Key 卡展开区,原只有 Codex 会走到,从未被仔细看过）:
+  「重新读取」按钮原摆在 `ex_key.right` 之外 = 伸出卡片右缘 ~50 DIP（按旧布局矩形推算:
+  左列卡的部分被右邻卡盖住、右列卡的部分被窗口右缘裁掉;**没有旧版截图对照,发版时
+  展开态的新布局也尚未做可视验证,只过了布局用例**）,现右对齐收进卡内,状态框收窄让位、
+  文案分完整/紧凑两档;
+  类型章改为"放得下才整章画"——旧阈值 4 DIP 只够剩一个字,标题行一有状态 chip 就画出
+  「周…」「本」这类残章（antigravity 标题长,第一眼就是残章）。
+- **自测 +44**:`TestAntigravity`（请求规格/分派表/解析器:真机样本、三种信封、零值省略、
+  disabled、钳制、未映射池/配置 type=4 往返与未知类型丢弃/显示模型四路/历史采样/快照往返/
+  布局回归/刷新回显）+ `TestSchedulerBasics` 新增 `HubHost`（401 不断机、连接被拒 60s 重探、
+  坏响应不停机、成功发布快照）。写用例时自己踩的坑:JSON 字面量多一个 `]` 导致解析失败,
+  而断言没做长度守卫直接越界 → selftest 段错误;**失败路径上的下标访问一律先验长度**。
+- **真机联调结论**:隔离 profile + 真 hub,生产 WinHTTP 路径 200 → 卡片 5h/7d 环、趋势带、
+  历史落盘、手动刷新全通;残留描述文件被正确忽略;真实实例上用户经「添加卡片」建卡即查成功。
+  未能可视验证的只剩展开态卡片的最终观感（联调时工位锁屏,见探针 README）。

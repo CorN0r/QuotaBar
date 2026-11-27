@@ -21,6 +21,10 @@ int64_t BackoffSeconds(int consecutive_failures) {
 
 namespace {
 constexpr int64_t kMs = 1000;
+// 本机 hub 类（antigravity）缺源/瞬态失败的重探周期：hub 随 Antigravity 启停,若走通用退避
+// （5→30 分钟封顶）,刚启动 Antigravity 的用户最长要等半小时才见数;一次重探只是读本地
+// 描述文件 + 一次回环 RPC,代价可忽略
+constexpr int64_t kHubReprobeSec = 60;
 } // namespace
 
 void Scheduler::Init(ISchedulerHost* host, HttpClient* http, HWND wnd) {
@@ -116,9 +120,27 @@ void Scheduler::StartFetch(ProviderSched& s, const AccountConfig& acc, int64_t n
                            bool manual) {
     const ProviderOps& ops = ProviderOpsOf(acc.type); // 组请求/平台 id/解析器全查分派表
     ProviderRequest req;
-    req.spec = ops.build_request();
+    // 本机 hub 类的基址随 hub 重启变化,由宿主现场解析（其余类型传空 = 固定地址）
+    req.spec = ops.build_request(host_->GetEndpointBase(acc));
     std::string key = host_->GetKey(acc);
     if (key.empty()) {
+        if (ops.local_hub) {
+            // hub 未运行（无存活描述文件）：不是凭证问题——不计失败、不走长退避;快照转
+            // 「未运行」并短周期重探（hub 随时可能被用户启动）。暂停态保留「已暂停」。
+            s.consecutive_failures = 0;
+            ScheduleProvider(s, now_mono + kHubReprobeSec * kMs);
+            ProviderSnapshot* hs = host_->FindSnap(acc.id);
+            if (hs && hs->status != FetchStatus::Unconfigured &&
+                hs->status != FetchStatus::Paused) {
+                hs->status = FetchStatus::Unconfigured;
+                hs->http_status = 0;
+                hs->error_text.clear();
+                Log::Write(LogLevel::Info, "fetch", acc.id + " 本机 hub 未运行，转入重探");
+                host_->OnSnapshotsChanged(false);
+            }
+            RescheduleTimer();
+            return;
+        }
         Log::Write(LogLevel::Info, "fetch", acc.id + " 无密钥，跳过");
         // 密钥消失（如 codex 登出后 auth.json 不在）也必须推进 next_fetch：
         // 直接 return 会让 deadline 停留在过去，RescheduleTimer 把定时器钉在
@@ -185,6 +207,9 @@ ManualKick Scheduler::RequestManual(const std::string& account_id, int* retry_af
         return ManualKick::RateLimited;
     }
     // 暂停时手动刷新：允许一次，但保持暂停调度（不安排 next_fetch）
+    // 本机 hub 未运行：如实回绝,不谎报「已开始刷新」
+    if (ProviderOpsOf(acc->type).local_hub && host_->GetKey(*acc).empty())
+        return ManualKick::SourceOffline;
     StartFetch(*s, *acc, now, true);
     return ManualKick::Started;
 }
@@ -202,6 +227,7 @@ ManualKickSummary SummarizeManualKicks(const std::vector<ManualKick>& kicks) {
             case ManualKick::NotConfigured: ++s.not_configured; break;
             case ManualKick::Disabled: ++s.inactive; break;
             case ManualKick::NoAccount: ++s.no_account; break;
+            case ManualKick::SourceOffline: ++s.source_offline; break;
         }
     }
     return s;
@@ -216,6 +242,8 @@ void ManualKickEchoText(const ManualKickSummary& s, int* kind, std::wstring* tex
             *text += L"，" + std::to_wstring(s.not_configured) + L" 张未配置 Key";
         else if (s.throttled > 0)
             *text += L"，" + std::to_wstring(s.throttled) + L" 张刚刷新过";
+        else if (s.source_offline > 0)
+            *text += L"，" + std::to_wstring(s.source_offline) + L" 张数据源未运行";
         else if (s.inactive + s.no_account > 0)
             *text += L"，" + std::to_wstring(s.inactive + s.no_account) + L" 张已停用";
         return;
@@ -233,6 +261,8 @@ void ManualKickEchoText(const ManualKickSummary& s, int* kind, std::wstring* tex
         *text = L"刚刚已刷新过，请 1 分钟后再试";
     } else if (s.not_configured > 0) {
         *text = L"请先在卡片设置中配置 API Key";
+    } else if (s.source_offline > 0) {
+        *text = L"Antigravity 未运行：启动并登录后自动连接";
     } else {
         *text = L"没有可刷新的卡片";
     }
@@ -258,16 +288,24 @@ void Scheduler::OnResponse(HttpResponse&& r) {
     int64_t now = NowMono();
     int64_t now_utc = NowUnix();
     ProviderSched& s = *sp;
+    // 本机 hub 类（antigravity）永不停机：hub 随宿主应用启停/重启,401（重启后 CSRF 令牌
+    // 换了）、连接被拒、空响应都是瞬态——状态靠短周期重探自愈（每次请求都现场重读描述
+    // 文件,拿到的必是当前 hub 的端口与令牌）。停机语义只属于真正的凭证/接口问题。
+    const ProviderOps* req_ops = ProviderOpsById(r.provider_id);
+    const bool local_hub = req_ops && req_ops->local_hub;
+    auto hub_delay = [&]() { return kHubReprobeSec + JitterSeconds(kHubReprobeSec, 10); };
 
     if (r.network_error) {
         if (r.cancelled && host_->IsShuttingDown()) return;
-        s.consecutive_failures++;
+        s.consecutive_failures = local_hub ? 0 : s.consecutive_failures + 1;
         snap->status = FetchStatus::Offline;
         snap->http_status = 0;
-        snap->error_text = r.cancelled ? "请求超时（10s 上限）" : "网络异常";
+        snap->error_text = r.cancelled ? "请求超时（10s 上限）"
+                              : local_hub ? "本机 hub 无响应" : "网络异常";
         snap->next_allowed_mono = 0;
         int64_t delay = BackoffSeconds(s.consecutive_failures);
         delay += JitterSeconds(delay, 10); // 0–10% 正向抖动
+        if (local_hub) delay = hub_delay();
         if (!cfg.query.pause) ScheduleProvider(s, now + delay * kMs);
         host_->OnSnapshotsChanged(false);
         char tls[80];
@@ -296,7 +334,7 @@ void Scheduler::OnResponse(HttpResponse&& r) {
                 s.consecutive_failures = 0;
                 snap->status = FetchStatus::ProtocolError;
                 snap->error_text = pr.error;
-                s.stopped = true; // 结构不兼容：暂停自动查询，避免重复错误请求
+                s.stopped = !local_hub; // 结构不兼容：暂停自动查询，避免重复错误请求（hub 类除外）
                 // 尾部附响应体头 8 字节 hex：区分 gzip(1f8b)/BOM(efbbbf)/错误页,不泄露内容
                 char hex[17]{};
                 if (!r.body.empty()) {
@@ -339,10 +377,11 @@ void Scheduler::OnResponse(HttpResponse&& r) {
         }
         case 401:
         case 403:
-            s.stopped = true; // 停止该账户自动重试，等待用户修改设置
+            s.stopped = !local_hub; // 停止该账户自动重试，等待用户修改设置
             s.consecutive_failures = 0;
             snap->status = FetchStatus::AuthError;
-            snap->error_text = "凭证无效或权限不足";
+            snap->error_text = local_hub ? "连接已失效（Antigravity 刚重启），稍后自动重连"
+                                         : "凭证无效或权限不足";
             break;
         case 429: {
             snap->status = FetchStatus::QueryRateLimited;
@@ -375,17 +414,20 @@ void Scheduler::OnResponse(HttpResponse&& r) {
         }
         case 404:
         case 410:
-            s.stopped = true;
+            s.stopped = !local_hub;
             snap->status = FetchStatus::ProtocolError;
             snap->error_text = "接口不支持或已变化";
             break;
         default:
             if (r.http_status >= 500) {
-                s.consecutive_failures++;
+                s.consecutive_failures = local_hub ? 0 : s.consecutive_failures + 1;
                 snap->status = FetchStatus::Offline;
-                snap->error_text = "服务端错误";
+                // hub 冷启动/未登录时也会回 5xx（社区报告,未真机复现）:只描述现象,不断言原因
+                snap->error_text = local_hub ? "Antigravity hub 暂不可用（启动中或未登录）"
+                                             : "服务端错误";
                 int64_t delay = BackoffSeconds(s.consecutive_failures);
                 delay += JitterSeconds(delay, 10);
+                if (local_hub) delay = hub_delay();
                 if (!cfg.query.pause) ScheduleProvider(s, now + delay * kMs);
                 Log::WriteF(LogLevel::Warn, "fetch", "%s 5xx=%d 退避=%llds",
                             acc->id.c_str(), r.http_status, (long long)delay);
@@ -393,7 +435,7 @@ void Scheduler::OnResponse(HttpResponse&& r) {
                 host_->OnSnapshotsChanged(false);
                 return;
             }
-            s.stopped = true;
+            s.stopped = !local_hub;
             snap->status = FetchStatus::RequestError;
             char buf[32];
             sprintf_s(buf, "HTTP %d", r.http_status);
@@ -401,6 +443,8 @@ void Scheduler::OnResponse(HttpResponse&& r) {
             break;
     }
     host_->OnSnapshotsChanged(false);
+    // hub 类走到这里（解析失败/401/404/其它 4xx）未停机：安排下一次重探
+    if (local_hub && !cfg.query.pause) ScheduleProvider(s, now + hub_delay() * kMs);
     RescheduleTimer();
 }
 
@@ -446,7 +490,9 @@ void Scheduler::OnAccountChanged(const std::string& account_id) {
     const AccountConfig* acc = host_->Cfg().FindAccount(account_id);
     ProviderSnapshot* snap = host_->FindSnap(account_id);
     if (!acc || !snap) return;
-    int64_t rev = host_->GetKey(*acc).empty() ? 0 : acc->cred_rev;
+    // 本机 hub 类恒视为已配置：hub 未运行也保持调度（StartFetch 缺源分支短周期重探）
+    const bool local_hub = ProviderOpsOf(acc->type).local_hub;
+    int64_t rev = (local_hub || !host_->GetKey(*acc).empty()) ? acc->cred_rev : 0;
     *snap = ProviderSnapshot{};
     snap->provider_id = ProviderIdOf(acc->type);
     snap->account_id = acc->id;

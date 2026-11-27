@@ -44,8 +44,8 @@ QuotaLayout ComputeQuotaLayout(const QuotaPageIn& in, const RECT& content, int d
         const int pw = cw - LS(80);
         int py = L.add_panel.top + LS(14);
         py += LS(26) + LS(10);                       // 面板标题行
-        const int chip_w = (pw - LS(18)) / 4;
-        for (int i = 0; i < 4; ++i)
+        const int chip_w = (pw - LS(6) * (kAddTypeCount - 1)) / kAddTypeCount;
+        for (int i = 0; i < kAddTypeCount; ++i)
             L.ap_type[i] = RC(px + i * (chip_w + LS(6)), py, chip_w, LS(34));
         py += LS(34) + LS(12);
         L.ap_alias = RC(px + LS(52), py, pw - LS(52), LS(34));
@@ -115,13 +115,17 @@ QuotaLayout ComputeQuotaLayout(const QuotaPageIn& in, const RECT& content, int d
                 int ey = r.settings_btn.bottom + LS(16);
                 r.ex_alias = RECT{cx0 + p + LS(52), ey, cright - p, ey + LS(34)};
                 ey += LS(34) + LS(8);
-                r.ex_key = RECT{cx0 + p + LS(52), ey, cright - p, ey + LS(36)};
+                // 无 Key 类凭证行:右端预留「重新读取」按钮（88 宽 + 10 间距）,状态框收窄让位。
+                // 旧写法把按钮摆在 ex_key.right 之外 = 卡片右内边距外侧,画出卡外 ~74 DIP
+                //（左列卡压住右邻卡、右列卡被窗口右缘裁掉）——2026-11-27 接入 antigravity 时修正。
+                const int sync_reserve = accs[ai].uses_api_key ? 0 : LS(88) + LS(10);
+                r.ex_key = RECT{cx0 + p + LS(52), ey, cright - p - sync_reserve, ey + LS(36)};
                 r.ex_key_eye = RC(r.ex_key.right - LS(10) - LS(28), ey + LS(4), LS(28),
                                   LS(28));
                 r.ex_key_copy = RC(r.ex_key_eye.left - LS(2) - LS(28), ey + LS(4), LS(28),
                                    LS(28));
                 r.ex_key_clear = RC(r.ex_key_copy.left - LS(2) - LS(28), ey + LS(4), LS(28),
-                                   LS(28));
+                                    LS(28));
                 ey += LS(36) + LS(8);
                 if (accs[ai].alert_capable) {
                     r.ex_alert = RECT{cx0 + p + LS(96), ey, cright - p, ey + LS(30)};
@@ -131,8 +135,9 @@ QuotaLayout ComputeQuotaLayout(const QuotaPageIn& in, const RECT& content, int d
                 const int btn_y = ey + LS(18) + LS(8);
                 r.ex_delete = RC(cx0 + p, btn_y, LS(96), LS(34));
                 r.ex_save = RC(cright - p - LS(96), btn_y, LS(96), LS(34));
-                r.ex_codex_sync = RC(r.ex_key.right + LS(10), r.ex_key.top + LS(4),
-                                     LS(88), LS(28));
+                if (!accs[ai].uses_api_key)
+                    r.ex_codex_sync = RC(cright - p - LS(88), r.ex_key.top + LS(4), LS(88),
+                                         LS(28));
                 r.expand_h = btn_y + LS(34) + LS(6) - (ry + base_h);
                 L.cards[k].bottom = ry + base_h + r.expand_h;
             }
@@ -152,7 +157,7 @@ QuotaLayout ComputeQuotaLayout(const QuotaPageIn& in, const RECT& content, int d
         if (r.right > r.left || r.bottom > r.top) { r.top += dy; r.bottom += dy; }
     };
     shift(L.add_panel);
-    for (int i = 0; i < 4; ++i) shift(L.ap_type[i]);
+    for (int i = 0; i < kAddTypeCount; ++i) shift(L.ap_type[i]);
     shift(L.ap_alias); shift(L.ap_key);
     shift(L.ap_key_eye); shift(L.ap_key_copy); shift(L.ap_key_clear);
     shift(L.ap_error); shift(L.ap_create); shift(L.ap_cancel); shift(L.ap_console);

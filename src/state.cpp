@@ -253,6 +253,73 @@ const QuotaWindow* FindDisplayWindow(const ProviderSnapshot& s, const std::strin
     return best;
 }
 
+// 按 key 取比例窗口的值段（GLM / Antigravity 同形,单点实现防口径漂移）。每个窗口一段
+// 「标签 剩余%」;无窗口时按状态给解释段。文案随平台:未配置态（Key 未填 / hub 未运行）
+// 与凭证/连接告警不同。
+struct PercentLineCopy {
+    const wchar_t* unconfigured; // 未配置态："待配置" / "未运行"
+    const wchar_t* auth_warn;    // 凭证/连接告警（无旧值时独立成段，有旧值时作尾注）
+};
+void AppendKeyedPercentLine(std::vector<DisplaySegment>& line, const ProviderSnapshot& s,
+                            const DisplayOptions& opt, int low_thr, const char* const* keys,
+                            size_t key_count, const PercentLineCopy& copy, int64_t now_mono,
+                            int interval_sec) {
+    const COLORREF base = opt.dark_text ? RGB(16, 16, 16) : RGB(255, 255, 255);
+    auto warn = [&]() { return WarnColor(opt, base); };
+    if (s.status == FetchStatus::Unconfigured) {
+        line.push_back({copy.unconfigured, base});
+        return;
+    }
+    bool stale = false;
+    if (s.status == FetchStatus::AuthError && s.last_success_at_utc == 0) {
+        line.push_back({copy.auth_warn, warn()});
+        return;
+    }
+    if (s.last_success_at_utc == 0 && s.status == FetchStatus::Fetching) {
+        line.push_back({L"查询中", base});
+        return;
+    }
+    std::vector<const QuotaWindow*> shown;
+    for (size_t k = 0; k < key_count; ++k) {
+        const QuotaWindow* w = FindDisplayWindow(s, keys[k]);
+        if (w) shown.push_back(w);
+    }
+    if (shown.empty()) {
+        switch (s.status) {
+            case FetchStatus::AuthError:
+                line.push_back({copy.auth_warn, warn()});
+                break;
+            case FetchStatus::Paused:
+                line.push_back({L"已暂停", base});
+                break;
+            case FetchStatus::ProtocolError:
+                line.push_back({L"接口变化", warn()});
+                break;
+            case FetchStatus::Fetching:
+                line.push_back({L"查询中", base});
+                break;
+            default:
+                line.push_back({L"未提供", base});
+        }
+    } else {
+        for (size_t i = 0; i < shown.size(); ++i) {
+            const QuotaWindow* w = shown[i];
+            if (i > 0) line.push_back({L" · ", base});
+            // 百分比口径窗口：保留窗口标签（5h/周）以免混淆（同 Codex）
+            line.push_back({Utf8ToWide(w->label) + L" " + PercentText(*w),
+                            ValueColor(opt, base, LowPercent(*w, low_thr),
+                                       w->remaining_percent == 0 && !w->tiny_positive)});
+            if (IsWindowStale(*w, s, interval_sec, now_mono)) stale = true;
+        }
+    }
+    if (s.status == FetchStatus::AuthError) {
+        line.push_back({std::wstring(L" · ") + copy.auth_warn, warn()});
+    } else if (s.status == FetchStatus::Paused) {
+        line.push_back({std::wstring(1, kPauseMark), base});
+    }
+    if (stale) line.push_back({std::wstring(1, kStaleMark), base});
+}
+
 } // namespace
 
 // 公共色/阈值入口（selftest 覆盖）：值段走开关门控，状态告警恒生效。
@@ -442,60 +509,18 @@ static std::vector<DisplaySegment> BuildAccountLine(const AccountView& av,
         }
         case AccountType::Glm: {
             // 智谱 Coding Plan：5h/周 token 百分比窗口；月度 MCP 只进详情
-            if (s.status == FetchStatus::Unconfigured) {
-                line.push_back({L"待配置", base});
-                break;
-            }
-            bool stale = false;
-            if (s.status == FetchStatus::AuthError && s.last_success_at_utc == 0) {
-                line.push_back({L"需更新密钥", warn()});
-                break;
-            }
-            if (s.last_success_at_utc == 0 && s.status == FetchStatus::Fetching) {
-                line.push_back({L"查询中", base});
-                break;
-            }
-            std::vector<const QuotaWindow*> shown;
             // 顺序与 Kimi/Codex 一致：5h 在前、周在后
             static const char* gkeys[] = {"glm_5h", "glm_week"};
-            for (const char* k : gkeys) {
-                const QuotaWindow* w = FindDisplayWindow(s, k);
-                if (w) shown.push_back(w);
-            }
-            if (shown.empty()) {
-                switch (s.status) {
-                    case FetchStatus::AuthError:
-                        line.push_back({L"需更新密钥", warn()});
-                        break;
-                    case FetchStatus::Paused:
-                        line.push_back({L"已暂停", base});
-                        break;
-                    case FetchStatus::ProtocolError:
-                        line.push_back({L"接口变化", warn()});
-                        break;
-                    case FetchStatus::Fetching:
-                        line.push_back({L"查询中", base});
-                        break;
-                    default:
-                        line.push_back({L"未提供", base});
-                }
-            } else {
-                for (size_t i = 0; i < shown.size(); ++i) {
-                    const QuotaWindow* w = shown[i];
-                    if (i > 0) line.push_back({L" · ", base});
-                    // 百分比口径窗口：保留窗口标签（5h/周）以免混淆（同 Codex）
-                    line.push_back({Utf8ToWide(w->label) + L" " + PercentText(*w),
-                                    ValueColor(opt, base, LowPercent(*w, low_thr),
-                                              w->remaining_percent == 0 && !w->tiny_positive)});
-                    if (IsWindowStale(*w, s, interval_sec, now_mono)) stale = true;
-                }
-            }
-            if (s.status == FetchStatus::AuthError) {
-                line.push_back({L" · 需更新密钥", warn()});
-            } else if (s.status == FetchStatus::Paused) {
-                line.push_back({std::wstring(1, kPauseMark), base});
-            }
-            if (stale) line.push_back({std::wstring(1, kStaleMark), base});
+            AppendKeyedPercentLine(line, s, opt, low_thr, gkeys, 2,
+                                   {L"待配置", L"需更新密钥"}, now_mono, interval_sec);
+            break;
+        }
+        case AccountType::Antigravity: {
+            // 本机 hub：Gemini 池 5h/周比例窗口（Claude&GPT 池只进详情）。
+            // 「未配置」在这里 = Antigravity 未运行（无 Key 可填,hub 启动后自动连接）
+            static const char* akeys[] = {"ag_5h", "ag_week"};
+            AppendKeyedPercentLine(line, s, opt, low_thr, akeys, 2,
+                                   {L"未运行", L"连接失效"}, now_mono, interval_sec);
             break;
         }
     }
@@ -687,6 +712,9 @@ std::vector<RingItem> BuildRingItems(const std::vector<AccountView>& accounts,
             case AccountType::Glm:
                 out.push_back(ring_percent(av, "glm_5h", "glm_week"));
                 break;
+            case AccountType::Antigravity:
+                out.push_back(ring_percent(av, "ag_5h", "ag_week"));
+                break;
             case AccountType::Deepseek: {
                 const ProviderSnapshot& s = *av.snap;
                 const AccountConfig& a = *av.cfg;
@@ -773,6 +801,7 @@ void PrimaryWindowKeys(AccountType t, const char** k1, const char** k2) {
     switch (t) {
         case AccountType::Codex: *k1 = "codex_5h"; *k2 = "codex_7d"; break;
         case AccountType::Glm: *k1 = "glm_5h"; *k2 = "glm_week"; break;
+        case AccountType::Antigravity: *k1 = "ag_5h"; *k2 = "ag_week"; break;
         default: *k1 = "kimi_rolling"; *k2 = "kimi_weekly"; break;
     }
 }
@@ -964,16 +993,17 @@ std::vector<DetailCard> BuildDetailCards(const std::vector<AccountView>& account
             r.tone = DetailTone::Warn; // 有旧值但凭证失效：琥珀提示（与圆环同语义）
         c.rows.push_back(std::move(r));
     };
-    // 窗口行顺序与常驻显示一致：主窗口(5h/rolling)第一、周期窗第二、其余保持原序
+    // 窗口行顺序与常驻显示一致：主窗口(5h/rolling)第一、周期窗第二、其余保持原序。
+    // max_rank:取到第几优先级（默认 3 = 含"其余"）;antigravity 只取主池两窗,其余池进注解
     auto push_ordered_rows = [&](DetailCard& c, const ProviderSnapshot& s, const char* key1,
-                                 const char* key2) {
+                                 const char* key2, int max_rank = 3) {
         const std::string k1 = key1, k1p = std::string(key1) + "_", k2 = key2;
         auto rank = [&](const QuotaWindow& w) {
             if (w.stable_key == k1 || StartsWith(w.stable_key, k1p)) return 0;
             if (w.stable_key == k2) return 1;
             return 2;
         };
-        for (int r = 0; r < 3 && c.rows.size() < 3; ++r) {
+        for (int r = 0; r < max_rank && r < 3 && c.rows.size() < 3; ++r) {
             for (const auto& w : s.windows) {
                 if (rank(w) != r) continue;
                 push_window_row(c, w, s);
@@ -1111,6 +1141,49 @@ std::vector<DetailCard> BuildDetailCards(const std::vector<AccountView>& account
                     else if (s.status == FetchStatus::AuthError)
                         c.note = L"凭证失效：展开「设置」更新 Key 后恢复查询。";
                     else c.note = L"月余为 MCP 调用次数，不计入常驻显示。";
+                }
+                break;
+            }
+            case AccountType::Antigravity: {
+                // 「未配置」= hub 未运行（无 Key 可填）:给出可行动引导
+                if (s.status == FetchStatus::Unconfigured) {
+                    c.unconfigured = true;
+                    c.status_text = L"未运行";
+                    // 行动在前:数值区提示只有一行宽,chip 已说明状态,重复的前缀会把可操作信息挤到省略号后
+                    c.note = L"启动 Antigravity 并登录后自动连接"
+                             L"（免填 Key，经本机 hub 只读查询）。";
+                } else {
+                    fill_status(c, s);
+                    push_ordered_rows(c, s, "ag_5h", "ag_week", 2); // 数值区只放 Gemini 池两窗
+                    std::vector<std::wstring> notes;
+                    if (!s.error_text.empty()) {
+                        notes.push_back(Utf8ToWide(s.error_text));
+                    } else if (s.status == FetchStatus::AuthError) {
+                        notes.push_back(L"连接已失效：Antigravity 重启后约一分钟内自动重连。");
+                    }
+                    // Claude&GPT 模型池额度独立,以文字补全
+                    const QuotaWindow* p5 = s.FindWindow("ag_3p_5h");
+                    const QuotaWindow* pw = s.FindWindow("ag_3p_week");
+                    if (p5 || pw) {
+                        std::wstring pool = L"Claude/GPT 池：";
+                        if (p5) pool += L"5h " + PercentText(*p5);
+                        if (p5 && pw) pool += L" · ";
+                        if (pw) pool += L"周 " + PercentText(*pw);
+                        notes.push_back(std::move(pool));
+                    }
+                    // 契约外的新池（argon-*/carbon-* 等未映射桶）同样进注解,不静默丢弃
+                    std::wstring others;
+                    for (const auto& w : s.windows) {
+                        if (!StartsWith(w.stable_key, "ag_other_")) continue;
+                        if (!others.empty()) others += L" · ";
+                        others += Utf8ToWide(w.label) + L" " + PercentText(w);
+                    }
+                    if (!others.empty()) notes.push_back(L"其它池：" + others);
+                    notes.push_back(L"仅百分比口径（hub 不返回绝对额度）。");
+                    for (size_t i = 0; i < notes.size(); ++i) {
+                        if (i) c.note += L"；";
+                        c.note += notes[i];
+                    }
                 }
                 break;
             }

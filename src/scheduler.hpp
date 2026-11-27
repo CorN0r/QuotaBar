@@ -30,10 +30,14 @@ struct ISchedulerHost {
     virtual const AccountConfig& AccountAt(size_t i) = 0;
     // 账户不存在（刚被删除等）返回 nullptr；调度器跳过
     virtual ProviderSnapshot* FindSnap(const std::string& account_id) = 0;
-    // API Key：API Key 型账户取存储密钥；codex 返回 auth.json 令牌
+    // API Key：API Key 型账户取存储密钥；codex 返回 auth.json 令牌；antigravity 返回本机 hub
+    // 的 CSRF 令牌（hub 未运行 → 空）
     virtual std::string GetKey(const AccountConfig& acc) = 0;
     // 附加认证标识：Codex 的 ChatGPT-Account-Id（其余返回空）
     virtual std::string GetAccountId(const AccountConfig& acc) = 0;
+    // 本机 hub 类（antigravity）的现场基址 "http://127.0.0.1:<httpPort>"（随 hub 重启变化）；
+    // 其余类型返回空 = 使用 ProviderRequestSpec.url 的固定地址
+    virtual std::string GetEndpointBase(const AccountConfig& acc) = 0;
     virtual void OnSnapshotsChanged(bool cache_dirty) = 0; // UI 刷新 + 缓存合并
     virtual void OnNotifyThreshold(const AccountConfig& acc) = 0;
     virtual bool IsShuttingDown() const = 0;
@@ -54,11 +58,12 @@ enum class ManualKick {
     NotConfigured, // 快照未就绪（未配置 Key / codex 未登录）
     Disabled,      // 账户已停用
     NoAccount,     // 账户不存在或调度表缺失
+    SourceOffline, // 本机数据源未运行（antigravity hub 未启动；启动后自动连接）
 };
 // 汇总（纯函数，selftest 复用）：CmdRefreshAll 把各账户结果归并后取回显文案
 struct ManualKickSummary {
     int started = 0, in_flight = 0, throttled = 0, rate_limited = 0;
-    int not_configured = 0, inactive = 0, no_account = 0;
+    int not_configured = 0, inactive = 0, no_account = 0, source_offline = 0;
     int total = 0;
     int retry_after_sec = 0; // 限频剩余秒数（调用方取各账户最大值填充；0=未知）
 };

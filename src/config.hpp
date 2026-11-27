@@ -45,8 +45,11 @@ struct NotifyConfig {
     double deepseek_threshold_cny = 5.0; // 金额账户（DeepSeek 等）余额 ≤ 该值提醒
 };
 
-// 账户类型（决定请求适配器与解析器；同类型可多账户，codex 除外——见 AccountConfig）
-enum class AccountType { Kimi, Codex, Glm, Deepseek };
+// 账户类型（决定请求适配器与解析器；同类型可多账户，无 API Key 的本机凭证类除外——
+// codex 读 ~/.codex/auth.json、antigravity 读本机 hub，凭证源全机唯一，见 AccountConfig）
+// 数值即 config.json 的 accounts[].type 落盘契约：只在末尾追加，勿重排。
+enum class AccountType { Kimi, Codex, Glm, Deepseek, Antigravity };
+inline constexpr int kAccountTypeCount = 5; // 按类型索引的定长表用（provider_icons）
 
 struct AccountConfig {
     std::string id;              // 稳定路由键（cache/secrets/调度）；新建 = "acc<N>"，codex 固定 "codex"
