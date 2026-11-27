@@ -70,7 +70,7 @@ enum {
     kWAddCard,        // 页头「添加卡片」按钮（展开/收起新建面板）
     kWHiddenChip,     // 页头「已隐藏 (N)」chip（展开/收起隐藏卡片区）
     // 添加面板
-    kWAddType0, kWAddType1, kWAddType2, kWAddType3,
+    kWAddType0, kWAddType1, kWAddType2, kWAddType3, kWAddType4, // 连续,与 kAddTypes 同序
     kWAddCreate, kWAddCancel, kWAddKeyEye, kWAddKeyCopy, kWAddKeyClear,
     // 额度卡片页脚/行内链接（动态注册；分发按「id>=kWLink0 且 id-kWLink0<g_links.size()」
     // 判界，页面固定控件 id 必须落在 g_links 数量之外——账户卡片控件用 kWAccBase=2000
@@ -102,9 +102,9 @@ constexpr int kAccKeyEye = 5;   // Key 明文切换
 constexpr int kAccKeyCopy = 6;  // Key 复制
 constexpr int kAccKeyClear = 7; // Key 清空
 constexpr int kAccHelp = 8;     // 获取说明（弹窗）
-constexpr int kAccCodexSync = 9;// codex 重新读取 auth.json
+constexpr int kAccCodexSync = 9;// 无 Key 类「重新读取」（codex 重读 auth.json / antigravity 重新发现 hub）
 constexpr int kAccNote = 10;    // ⓘ 口径说明悬停命中区
-constexpr int kAccAlert = 11;   // 低额预警阈值（弹出选择菜单；Kimi/GLM 卡）
+constexpr int kAccAlert = 11;   // 低额预警阈值（弹出选择菜单；比例窗口类卡片）
 constexpr int kAccUnhide = 12;  // 已隐藏区「显示」按钮（仅隐藏行使用，与卡片子 id 错开）
 constexpr int kAccDrag = 13;    // 卡片头部拖拽排序命中区（F3；按下拖离阈值 6px 起拖）
 
@@ -188,7 +188,7 @@ bool DisplayDraftDirty(HWND h, const AppConfig& base);
 
 struct QuotaUi {
     bool add_open = false;          // 「添加卡片」面板展开
-    int add_type = 0;               // 0=Kimi 1=Codex 2=GLM 3=Deepseek（chips 序）
+    int add_type = 0;               // 0=Kimi 1=Codex 2=GLM 3=Deepseek 4=Antigravity（chips 序）
     bool add_mask = true;           // 面板 Key 输入掩码态
     std::wstring add_error;         // 面板内联错误
     bool hidden_open = false;       // 已隐藏卡片区展开
@@ -278,8 +278,11 @@ extern const ModeDef kModes[4];
 // 「保存设置」用进页旧快照把已落盘的位置拽回去。
 void SyncDraftDisplay(const DisplayConfig& disp);
 
-// 添加面板类型序（与 g_q.add_type 对应；定义在 quota_page.cpp）
-extern const AccountType kAddTypes[4];
+// 添加面板类型序（与 g_q.add_type 对应；定义在 quota_page.cpp,长度 = ui::kAddTypeCount）
+extern const AccountType kAddTypes[ui::kAddTypeCount];
+// 无 Key 类凭证行的状态文案（添加面板与卡片展开区共用）：ready = 本机凭证源是否就绪;
+// compact = 卡片展开区用（状态框要给「重新读取」按钮让位,窄窗下只放得下结论）
+const wchar_t* LocalCredentialStatus(AccountType t, bool ready, bool compact);
 const wchar_t* AddTypeLabel(int i);
 const wchar_t* AddTypeKeyPlaceholder(int i);
 

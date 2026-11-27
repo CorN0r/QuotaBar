@@ -9,6 +9,9 @@
 
 namespace qb::ui {
 
+// 「添加卡片」面板的类型 chip 数（kAddTypes 同长,定义在 quota_page.cpp）
+inline constexpr int kAddTypeCount = 5;
+
 // 卡片内控件矩形（含滚动偏移后的最终客户区坐标）
 struct QuotaCardR {
     RECT toggle{0, 0, 0, 0};        // 启用开关
@@ -20,7 +23,7 @@ struct QuotaCardR {
     RECT ex_key{0, 0, 0, 0};        // 展开区：Key 输入框
     RECT ex_alert{0, 0, 0, 0};      // 展开区：低额预警阈值按钮（Kimi/GLM 卡）
     RECT ex_key_eye{0, 0, 0, 0}, ex_key_copy{0, 0, 0, 0}, ex_key_clear{0, 0, 0, 0};
-    RECT ex_codex_sync{0, 0, 0, 0}; // codex 重新读取
+    RECT ex_codex_sync{0, 0, 0, 0}; // 无 Key 类「重新读取」（凭证行右端,卡内右对齐;其余卡为空矩形）
     RECT ex_save{0, 0, 0, 0}, ex_delete{0, 0, 0, 0};
     RECT trend{0, 0, 0, 0};         // 趋势带（标题行 + 图表面板）
     int expand_h = 0;               // 展开区高（px）
@@ -36,7 +39,7 @@ struct QuotaLayout {
     RECT stats_block{0, 0, 0, 0};   // 右上统计文本块（右对齐两行；有隐藏 chip 时让出其
                                     // 左界——chip 后画，重叠会盖住「N 项服务正常计费中」）
     RECT add_panel{0, 0, 0, 0};     // 添加面板（展开时有效）
-    RECT ap_type[4]{};
+    RECT ap_type[kAddTypeCount]{};
     RECT ap_alias{0, 0, 0, 0}, ap_key{0, 0, 0, 0};
     RECT ap_key_eye{0, 0, 0, 0}, ap_key_copy{0, 0, 0, 0}, ap_key_clear{0, 0, 0, 0};
     RECT ap_error{0, 0, 0, 0};
@@ -58,7 +61,8 @@ struct QuotaCardIn {
     bool visible = true;        // card_visible
     bool has_trend = false;     // App::AccountHasTrendFor（趋势带占位与 paint 同判定）
     bool expanded = false;      // 额度页展开设置区
-    bool alert_capable = false; // Kimi/GLM（阈值行仅这两类卡有）
+    bool alert_capable = false; // 比例窗口类（Kimi/GLM/Antigravity：阈值行仅这几类卡有）
+    bool uses_api_key = true;   // false=无 Key 类:凭证行右端给「重新读取」按钮让位（状态框收窄）
 };
 struct QuotaPageIn {
     bool add_open = false;      // 「添加卡片」面板展开

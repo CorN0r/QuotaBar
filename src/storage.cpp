@@ -76,7 +76,9 @@ bool ReadAll(const std::wstring& path, std::string& out) {
 
 // ---------- config ----------
 std::vector<AccountConfig> AppConfig::Defaults() {
-    // 顺序 = 历史卡片序 K/C/D/G；codex 凭证版本恒 1（auth.json 免密直连）
+    // 顺序 = 历史卡片序 K/C/D/G；无 Key 类凭证版本恒 1（本机凭证源免密直连）。
+    // antigravity 不在默认集:需本机装着并运行 Antigravity,对不用它的用户只是一张「未运行」
+    // 噪声卡——经「添加卡片」按需创建。
     std::vector<AccountConfig> out;
     auto add = [&](AccountType t, const char* id) {
         AccountConfig a;
@@ -85,7 +87,7 @@ std::vector<AccountConfig> AppConfig::Defaults() {
         a.alias = ProviderDefaultAlias(t);
         a.enabled = true;
         a.card_visible = true;
-        a.cred_rev = t == AccountType::Codex ? 1 : 0;
+        a.cred_rev = ProviderUsesApiKey(t) ? 0 : 1;
         out.push_back(std::move(a));
     };
     add(AccountType::Kimi, "kimi");
@@ -249,7 +251,8 @@ bool ConfigIo::Load(const std::string& text, AppConfig& c) {
             a.id = ja.Find("id").AsString();
             int64_t ty = 0;
             ja.Find("type").AsInt(ty);
-            if (ty < 0 || ty > 3) continue; // 未知类型：丢弃该条目（防御）
+            // 未知类型：丢弃该条目（防御）。上界随 AccountType 末尾追加而放宽
+            if (ty < 0 || ty >= kAccountTypeCount) continue;
             a.type = (AccountType)(int)ty;
             a.alias = ja.Find("alias").AsString();
             // 别名钳制到与 UI 输入上限（EM_SETLIMITTEXT 64 宽字符）一致：外部手改
@@ -272,7 +275,7 @@ bool ConfigIo::Load(const std::string& text, AppConfig& c) {
                 if (a.alert_pct != 0 && a.alert_pct != 1 && a.alert_pct < 5) a.alert_pct = 0;
             }
             if (a.id.empty()) continue;
-            if (a.type == AccountType::Codex) a.cred_rev = 1; // codex 无换 Key 语义
+            if (!ProviderUsesApiKey(a.type)) a.cred_rev = 1; // 无 Key 类无换 Key 语义
             c.accounts.push_back(std::move(a));
         }
     } else {
@@ -395,8 +398,8 @@ bool SaveSecrets(const std::vector<AccountConfig>& accounts,
         return true;
     };
     for (size_t i = 0; i < accounts.size(); ++i) {
-        // codex 不落盘（占位空段保持与账户列表对齐）
-        if (!write_blob(accounts[i].type == AccountType::Codex ? std::string() : keys[i]))
+        // 无 Key 类不落盘（占位空段保持与账户列表对齐;其凭证由本机凭证源现场读取）
+        if (!write_blob(ProviderUsesApiKey(accounts[i].type) ? keys[i] : std::string()))
             return false;
     }
     return AtomicWrite(GetSecretsPath(), data.data(), data.size());

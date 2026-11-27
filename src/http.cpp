@@ -52,6 +52,7 @@ struct HttpClient::Impl {
         DWORD err = 0;
         int status = 0;
         std::string retry_after;
+        std::string send_body;              // 请求体副本：异步发送期间必须存活
         std::string body;
         size_t read_offset = 0;            // 本次 ReadData 写入位置
         int64_t start_mono = 0;
@@ -238,7 +239,8 @@ int64_t HttpClient::Start(ProviderRequest&& req) {
         return 0;
     }
     DWORD flags = (uc.nScheme == INTERNET_SCHEME_HTTPS) ? WINHTTP_FLAG_SECURE : 0;
-    ctx->request = WinHttpOpenRequest(ctx->connect, L"GET", path, nullptr,
+    const std::wstring verb = Utf8ToWide(req.spec.method.empty() ? "GET" : req.spec.method);
+    ctx->request = WinHttpOpenRequest(ctx->connect, verb.c_str(), path, nullptr,
                                       WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, flags);
     if (!ctx->request) {
         Log::WriteF(LogLevel::Error, "http", "OpenRequest 失败 provider=%s",
@@ -260,14 +262,24 @@ int64_t HttpClient::Start(ProviderRequest&& req) {
         std::lock_guard<std::mutex> lk(impl_->mu);
         impl_->raw_map[ctx.get()] = ctx;
     }
-    std::wstring headers =
-        L"Accept: application/json\r\nAccept-Encoding: identity\r\nAuthorization: " +
-        Utf8ToWide(req.auth_header) + L"\r\n";
+    std::wstring headers = L"Accept: application/json\r\nAccept-Encoding: identity\r\n";
+    // 认证头名随 provider（Authorization / x-codeium-csrf-token）；值为空则整个头不发
+    if (!req.auth_header.empty()) {
+        headers += Utf8ToWide(req.spec.auth_header ? req.spec.auth_header : "Authorization") +
+                   L": " + Utf8ToWide(req.auth_header) + L"\r\n";
+    }
     for (const auto& kv : req.extra_headers) {
         headers += Utf8ToWide(kv.first) + L": " + Utf8ToWide(kv.second) + L"\r\n";
     }
+    // 请求体：非空即随请求发送（Content-Length 由 dwTotalLength 推得,WinHTTP 自动补头）
+    ctx->send_body = req.spec.body;
+    const bool has_body = !ctx->send_body.empty();
+    if (has_body) headers += L"Content-Type: application/json\r\n";
     if (!WinHttpSendRequest(ctx->request, headers.c_str(), (DWORD)headers.size(),
-                            WINHTTP_NO_REQUEST_DATA, 0, 0, (DWORD_PTR)ctx.get())) {
+                            has_body ? (LPVOID)ctx->send_body.data() : WINHTTP_NO_REQUEST_DATA,
+                            has_body ? (DWORD)ctx->send_body.size() : 0,
+                            has_body ? (DWORD)ctx->send_body.size() : 0,
+                            (DWORD_PTR)ctx.get())) {
         DWORD gle = GetLastError();
         Log::WriteF(LogLevel::Error, "http", "发送失败 provider=%s", req.provider_id.c_str());
         {

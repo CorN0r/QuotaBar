@@ -1,5 +1,5 @@
 // provider_icons.hpp — 原厂供应商图标（RCDATA 内嵌 128px 圆角芯片 PNG）。
-// 资源：PVID_KIMI / PVID_CODEX / PVID_GLM / PVID_DEEPSEEK（assets/quota_bar.rc）。
+// 资源：PVID_KIMI / PVID_CODEX / PVID_GLM / PVID_DEEPSEEK / PVID_ANTIGRAVITY（assets/quota_bar.rc）。
 // 两条绘制路径共用一次解码：
 //   - GDI+（详情页卡片徽章 / 圆环徽章）：DrawProviderIcon
 //   - D2D（嵌入条名称行）：ProviderIconPixels 取预乘 BGRA，rt->CreateBitmap 每帧重建
@@ -12,7 +12,7 @@
 
 namespace qb {
 
-// 幂等初始化：解码全部四枚图标（需在 UI 线程；GDI+ 由 theme::EnsureGdiplus 保证）
+// 幂等初始化：解码全部图标（需在 UI 线程；GDI+ 由 theme::EnsureGdiplus 保证）
 void ProviderIconsInit();
 
 // 该类型图标是否已就绪（资源缺失/解码失败 = false，调用方回落文字）

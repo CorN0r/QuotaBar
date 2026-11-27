@@ -36,7 +36,7 @@ inline constexpr UINT kTimerFsCheck  = 2;          // F11 无前台切换的一�
 inline constexpr UINT kTimerSlotPoll = 3;          // 任务栏内嵌槽 1s 轮询（仅 Embed 期）
 inline constexpr UINT kExitDrainTimer = 100;       // 退出时等待在途请求收尾（一次性短轮询）
 
-// 运行态账户：配置 + 密钥 + 快照（key 为空 = 未配置；codex 恒为空，令牌即时读 auth.json）
+// 运行态账户：配置 + 密钥 + 快照（key 为空 = 未配置；codex/antigravity 恒为空，令牌即时读本机凭证源）
 struct AccountState {
     AccountConfig cfg;
     std::string key;
@@ -70,6 +70,7 @@ public:
     ProviderSnapshot* FindSnap(const std::string& account_id) override;
     std::string GetKey(const AccountConfig& acc) override;
     std::string GetAccountId(const AccountConfig& acc) override; // Codex: ChatGPT-Account-Id
+    std::string GetEndpointBase(const AccountConfig& acc) override; // Antigravity: 本机 hub 基址
     void OnSnapshotsChanged(bool cache_dirty) override;
     void OnNotifyThreshold(const AccountConfig& acc) override;
     bool IsShuttingDown() const override { return shutting_down_; }
@@ -90,11 +91,14 @@ public:
     std::string GetAccountKey(const std::string& id) const;   // UI 明文回填
     // codex 免密直连检测（~/.codex/auth.json 是否就绪）
     bool CodexAuthReady() const;
+    // antigravity 本机直连检测（是否有存活的 hub 描述文件；UI 凭证行文案用）
+    bool AntigravityHubReady() const;
     enum class AccountCommit { NoChange, Ok, IoError };
-    // 新增账户（codex 忽略 key；别名空则用平台默认名）；成功即查询
+    // 新增账户（无 Key 类忽略 key；别名空则用平台默认名）；成功即查询。
+    // 无 Key 类（codex/antigravity）凭证源全机唯一,已存在同类型卡片时返回 false
     bool AddAccount(AccountType type, const std::wstring& alias, const std::string& key);
     bool RemoveAccount(const std::string& id);
-    // 修改别名/Key（codex 只改别名）；Key 变化递增 cred_rev、清旧数据、立即验证
+    // 修改别名/Key（无 Key 类只改别名）；Key 变化递增 cred_rev、清旧数据、立即验证
     AccountCommit UpdateAccount(const std::string& id, const std::wstring& alias,
                                 const std::string& key);
     // 即落盘开关三件套：返回 config.json 落盘结果（false=写入失败，UI 回显；无改动返回 true）

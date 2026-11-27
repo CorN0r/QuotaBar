@@ -20,7 +20,8 @@ struct IconBuf {
 };
 
 IconBuf* Slot(AccountType t) {
-    static IconBuf buf[4]; // AccountType { Kimi, Codex, Glm, Deepseek }
+    static IconBuf buf[kAccountTypeCount]; // 每个 AccountType 一枚
+    if ((int)t < 0 || (int)t >= kAccountTypeCount) return nullptr; // 越界类型：调用方按未就绪处理
     return &buf[(int)t];
 }
 
@@ -30,6 +31,7 @@ const wchar_t* ResName(AccountType t) {
         case AccountType::Codex: return L"PVID_CODEX";
         case AccountType::Glm: return L"PVID_GLM";
         case AccountType::Deepseek: return L"PVID_DEEPSEEK";
+        case AccountType::Antigravity: return L"PVID_ANTIGRAVITY";
     }
     return nullptr;
 }
@@ -42,7 +44,7 @@ void ProviderIconsInit() {
     done = true;
     theme::EnsureGdiplus();
     HINSTANCE inst = GetModuleHandleW(nullptr);
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < kAccountTypeCount; ++i) {
         const auto t = (AccountType)i;
         const wchar_t* name = ResName(t);
         IconBuf* s = Slot(t);

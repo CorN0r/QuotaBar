@@ -50,6 +50,91 @@ bool ReadCodexAuth(std::string& token, std::string& account_id) {
     token = at.AsString();
     return true;
 }
+
+// Antigravity 本机 hub（Language Server）描述文件：
+//   ~/.gemini/<product>/daemon/hub_<httpPort>.json = {pid,httpsPort,httpPort,lsVersion,csrfToken}
+//（Antigravity 44.9.1 / LS 2.35.2 真机确认）。额度经它的本地 RPC 查询,Google 侧认证由 hub
+// 代劳——QuotaBar 全程不接触 OAuth 令牌。hub 每次启动写一份新文件、退出不清理（本机实测
+// 残留 6 份历史文件）→ 必须按 pid 存活筛选、再取 mtime 最新。基目录可被 ANTIGRAVITY_GEMINI_DIR
+// 覆盖（与官方插件生态同约定）。CSRF 令牌只在内存里组请求头:绝不写日志/配置/缓存/详情文本。
+struct AntigravityHub {
+    DWORD pid = 0;
+    int http_port = 0;
+    std::string csrf_token;
+    std::string ls_version;
+};
+
+bool ProcessAlive(DWORD pid) {
+    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!h) return false;
+    DWORD code = 0;
+    const BOOL ok = GetExitCodeProcess(h, &code);
+    CloseHandle(h);
+    return ok && code == STILL_ACTIVE;
+}
+
+bool ReadHubDescriptor(const std::wstring& path, AntigravityHub& out) {
+    std::ifstream f(path, std::ios::binary);
+    if (!f) return false; // 正在被替换/无权限:当作不存在
+    char buf[2048];
+    std::string text;
+    while (f) {
+        f.read(buf, sizeof(buf));
+        text.append(buf, (size_t)f.gcount());
+        if (text.size() > 64 * 1024) return false;
+    }
+    auto root = JsonParse(text);
+    if (!root || !root->IsObject()) return false;
+    int64_t pid = 0, port = 0;
+    root->Find("pid").AsInt(pid);
+    root->Find("httpPort").AsInt(port);
+    if (port <= 0) root->Find("port").AsInt(port); // 旧字段名兜底
+    std::string tok = root->Find("csrfToken").AsString();
+    if (tok.empty()) tok = root->Find("csrf_token").AsString();
+    out.pid = (DWORD)pid;
+    out.http_port = (int)port;
+    out.csrf_token = Trim(tok);
+    out.ls_version = root->Find("lsVersion").AsString();
+    return !out.csrf_token.empty() && out.http_port > 0 && out.http_port <= 65535;
+}
+
+bool FindAntigravityHub(AntigravityHub& out) {
+    wchar_t buf[MAX_PATH];
+    DWORD n = GetEnvironmentVariableW(L"ANTIGRAVITY_GEMINI_DIR", buf, MAX_PATH);
+    std::wstring base;
+    if (n && n < MAX_PATH) {
+        base = buf;
+    } else {
+        n = GetEnvironmentVariableW(L"USERPROFILE", buf, MAX_PATH);
+        if (!n || n >= MAX_PATH) return false;
+        base = std::wstring(buf) + L"\\.gemini";
+    }
+    // 产品根目录序同官方插件生态（antigravity-cli 的 hub 优先探测,但最终按 mtime 取最新）
+    static const wchar_t* kProducts[] = {L"antigravity-cli", L"antigravity", L"antigravity-ide",
+                                         L"antigravity-idea"};
+    bool found = false;
+    FILETIME newest{};
+    for (const wchar_t* product : kProducts) {
+        const std::wstring daemon = base + L"\\" + product + L"\\daemon\\";
+        WIN32_FIND_DATAW fd{};
+        HANDLE h = FindFirstFileW((daemon + L"hub_*.json").c_str(), &fd);
+        if (h == INVALID_HANDLE_VALUE) continue;
+        do {
+            // 只看比已采纳者更新的文件（旧文件全是残留,读了也是白读）
+            if (found && CompareFileTime(&fd.ftLastWriteTime, &newest) <= 0) continue;
+            AntigravityHub cand;
+            // pid 缺失时放行（与官方插件生态同语义）:错文件至多换来一次连接被拒,下轮重探自愈
+            if (ReadHubDescriptor(daemon + fd.cFileName, cand) &&
+                (cand.pid == 0 || ProcessAlive(cand.pid))) {
+                out = std::move(cand);
+                newest = fd.ftLastWriteTime;
+                found = true;
+            }
+        } while (FindNextFileW(h, &fd));
+        FindClose(h);
+    }
+    return found;
+}
 } // namespace
 
 // 本文件内部实现（内部链接）：单实例常量、网络监视、WinEvent 钩子、主题读取。
@@ -471,9 +556,20 @@ std::string App::GetKey(const AccountConfig& acc) {
         std::string tok, acc_id;
         return ReadCodexAuth(tok, acc_id) ? tok : "";
     }
+    if (ProviderOpsOf(acc.type).local_hub) {
+        // antigravity 本机直连：CSRF 令牌即请求凭证,每次现场读 hub 描述文件（未运行 → 空）
+        AntigravityHub hub;
+        return FindAntigravityHub(hub) ? hub.csrf_token : "";
+    }
     for (const auto& a : accounts_)
         if (a.cfg.id == acc.id) return a.key;
     return {};
+}
+std::string App::GetEndpointBase(const AccountConfig& acc) {
+    if (!ProviderOpsOf(acc.type).local_hub) return {};
+    AntigravityHub hub;
+    if (!FindAntigravityHub(hub)) return {};
+    return "http://127.0.0.1:" + std::to_string(hub.http_port);
 }
 std::string App::GetAccountId(const AccountConfig& acc) {
     if (acc.type != AccountType::Codex) return {};
@@ -485,17 +581,23 @@ bool App::CodexAuthReady() const {
     std::string tok, acc_id;
     return ReadCodexAuth(tok, acc_id) && !tok.empty();
 }
+bool App::AntigravityHubReady() const {
+    AntigravityHub hub;
+    return FindAntigravityHub(hub);
+}
 
 void App::LoadStartupState() {
     // 快照初始化：配置了 Key → 查询中；未配置 → 待配置
     auto seed = [&](AccountState& st) {
-        std::string key = st.cfg.type == AccountType::Codex
-                              ? GetKey(st.cfg)
-                              : st.key;
+        const bool local_hub = ProviderOpsOf(st.cfg.type).local_hub;
+        // 无 Key 类（codex/antigravity）的凭证现场读本机凭证源,不取存储密钥
+        std::string key = ProviderUsesApiKey(st.cfg.type) ? st.key : GetKey(st.cfg);
         st.snap.provider_id = ProviderIdOf(st.cfg.type);
         st.snap.account_id = st.cfg.id;
-        // codex 凭证版本固定 1（auth.json 已配置即有效，无换 Key 语义）
-        st.snap.credential_revision = key.empty() ? 0 : st.cfg.cred_rev;
+        // 无 Key 类凭证版本固定 1（无换 Key 语义）。antigravity 恒视为已配置:hub 未运行
+        // 也要进入调度,由 StartFetch 的缺源分支短周期重探（否则启动后才开 Antigravity
+        // 的用户永远等不到数据）
+        st.snap.credential_revision = key.empty() && !local_hub ? 0 : st.cfg.cred_rev;
         st.snap.status = key.empty() ? FetchStatus::Unconfigured : FetchStatus::Fetching;
         st.snap.error_text.clear();
     };
@@ -555,7 +657,7 @@ std::string App::GetAccountKey(const std::string& id) const {
     return {};
 }
 bool App::AddAccount(AccountType type, const std::wstring& alias_w, const std::string& key) {
-    if (type == AccountType::Codex && cfg_.HasType(AccountType::Codex)) return false;
+    if (ProviderSingleCard(type) && cfg_.HasType(type)) return false; // 凭证源全机唯一
     AccountState st;
     st.cfg.id = "acc" + std::to_string(++cfg_.account_seq);
     st.cfg.type = type;
@@ -564,7 +666,7 @@ bool App::AddAccount(AccountType type, const std::wstring& alias_w, const std::s
     st.cfg.enabled = true;
     st.cfg.card_visible = true;
     st.cfg.cred_rev = 1; // 新建账户 = v1 凭证
-    if (type != AccountType::Codex) st.key = Trim(key);
+    if (ProviderUsesApiKey(type)) st.key = Trim(key);
     st.snap.provider_id = ProviderIdOf(type);
     st.snap.account_id = st.cfg.id;
     accounts_.push_back(std::move(st));
@@ -610,8 +712,8 @@ App::AccountCommit App::UpdateAccount(const std::string& id, const std::wstring&
     AccountState* st = FindAccount(id);
     if (!st) return AccountCommit::NoChange;
     std::string alias = WideToUtf8(TrimW(alias_w));
-    if (st->cfg.type == AccountType::Codex) {
-        // codex：只改别名（令牌由 auth.json 提供）
+    if (!ProviderUsesApiKey(st->cfg.type)) {
+        // 无 Key 类（codex/antigravity）：只改别名（凭证由本机凭证源提供）
         if (alias == st->cfg.alias) return AccountCommit::NoChange;
         st->cfg.alias = alias;
         config_dirty_ = true;
@@ -819,9 +921,10 @@ void App::SaveCacheNow(bool force) {
     if (!force && now - last_cache_save_mono_ < 15 * 60 * 1000) return; // 合并 ≥15 分钟
     CacheData c;
     c.saved_at_utc = NowUnix();
-    // 未配置/无成功数据的快照不落盘（避免把"待配置"当缓存）；codex 不入盘
+    // 未配置/无成功数据的快照不落盘（避免把"待配置"当缓存）；无 Key 类不入盘——本机
+    // 凭证源可能已换账户（codex 换 ChatGPT 账户、antigravity 换 Google 账户）,旧快照不得冒充
     for (const auto& a : accounts_) {
-        if (a.cfg.type == AccountType::Codex) continue;
+        if (!ProviderUsesApiKey(a.cfg.type)) continue;
         if (a.snap.last_success_at_utc > 0) c.items.push_back(a.snap);
     }
     if (!c.items.empty()) {
@@ -1114,7 +1217,7 @@ void App::OnNotifyThreshold(const AccountConfig& acc) {
 
     if (!cfg_.notify.enabled) return;
 
-    if (acc.type == AccountType::Kimi || acc.type == AccountType::Glm) {
+    if (ProviderAlertCapable(acc.type)) {
         if (best == 101) return; // 暂无已知窗口
         int thr = acc.alert_pct == 1 ? 0 // 关闭
                   : acc.alert_pct > 0 ? acc.alert_pct

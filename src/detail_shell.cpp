@@ -56,6 +56,12 @@ void ShowHelpForType(HWND h, AccountType t) {
                   L"QuotaBar 自动只读 ~/.codex/auth.json（令牌由 Codex CLI 维护刷新）。";
             title = L"Codex 免密直连说明";
             break;
+        case AccountType::Antigravity:
+            msg = L"Antigravity 免填 Key：启动 Antigravity 并登录 Google 账户，"
+                  L"QuotaBar 经它的本机服务（hub）只读查询额度，不接触你的 Google 令牌。\n"
+                  L"Antigravity 未运行时卡片显示「未运行」，启动后约一分钟内自动连接。";
+            title = L"Antigravity 本机直连说明";
+            break;
         default:
             msg = L"前往 Moonshot 开放平台控制台（kimi.com/code），进入「API 密钥」管理中心，"
                   L"点击创建新的 Secret Key。请确保该密钥具有 Coding Plan 额度扣除权限。";
@@ -432,14 +438,17 @@ void HandleAction(TrayUi* self, HWND h, int id) {
             return;
         case kWAddCreate: {
             const AccountType t = kAddTypes[g_q.add_type];
-            if (t == AccountType::Codex && app->Cfg().HasType(AccountType::Codex)) {
-                g_q.add_error = L"Codex 仅支持一张卡片（auth.json 唯一）";
+            // 无 Key 类凭证源全机唯一:已有同类型卡片则拒绝
+            if (ProviderSingleCard(t) && app->Cfg().HasType(t)) {
+                g_q.add_error = t == AccountType::Antigravity
+                                    ? L"Antigravity 仅支持一张卡片（本机 hub 唯一）"
+                                    : L"Codex 仅支持一张卡片（auth.json 唯一）";
                 InvalidateRect(h, nullptr, FALSE);
                 return;
             }
             std::wstring alias = EditTextW(GetDlgItem(h, kEditAddAlias));
             std::string key = EditTextUtf8(GetDlgItem(h, kEditAddKey));
-            if (t != AccountType::Codex && Trim(key).empty()) {
+            if (ProviderUsesApiKey(t) && Trim(key).empty()) {
                 g_q.add_error = L"请输入 API Key（「获取说明」有获取方式）";
                 InvalidateRect(h, nullptr, FALSE);
                 return;
@@ -457,10 +466,10 @@ void HandleAction(TrayUi* self, HWND h, int id) {
         }
         default: break;
     }
-    if (id >= kWAddType0 && id <= kWAddType3) {
+    if (id >= kWAddType0 && id < kWAddType0 + ui::kAddTypeCount) {
         g_q.add_type = id - kWAddType0;
         g_q.add_error.clear();
-        self->RebuildPage(); // codex 类型无 Key 输入框 → 重建子控件
+        self->RebuildPage(); // 无 Key 类型无 Key 输入框 → 重建子控件
         return;
     }
     // 添加面板 Key 行按钮
@@ -534,7 +543,7 @@ void HandleAction(TrayUi* self, HWND h, int id) {
                 std::string key = EditTextUtf8(GetDlgItem(h, kEditAccKey0 + idx));
                 // 清空 Key=删除密钥（cred_rev 隔离、旧密钥不可恢复），与「删除卡片」
                 // 同级危险操作：先确认。旧实现静默直接清掉，用户无感知丢失。
-                if (st.cfg.type != AccountType::Codex && Trim(key).empty() &&
+                if (ProviderUsesApiKey(st.cfg.type) && Trim(key).empty() &&
                     !app->GetAccountKey(st.cfg.id).empty()) {
                     std::wstring disp =
                         alias.empty()
@@ -599,7 +608,9 @@ void HandleAction(TrayUi* self, HWND h, int id) {
                 ShowHelpForType(h, st.cfg.type);
                 return;
             case kAccCodexSync:
-                app->CmdRefreshAll(); // codex 令牌每次请求即时读 auth.json
+                // 无 Key 类的凭证每次请求都现场读本机凭证源:刷新即「重新读取」
+                //（codex 重读 auth.json / antigravity 重新发现本机 hub）
+                app->CmdRefreshAll();
                 return;
             case kAccAlert: {
                 // 低额预警阈值档位菜单（即选即存；深色/浅色随系统主题）
@@ -1395,7 +1406,7 @@ void TrayUi::Relayout() {
         };
         // 添加面板
         const bool add_key_visible =
-            g_q.add_open && kAddTypes[g_q.add_type] != AccountType::Codex;
+            g_q.add_open && ProviderUsesApiKey(kAddTypes[g_q.add_type]);
         HWND aa = GetDlgItem(detail_, kEditAddAlias);
         if (aa) {
             if (g_q.add_open) {
@@ -1532,7 +1543,7 @@ void TrayUi::CreatePageControls() {
         case kPageQuota: {
             if (g_q.add_open) {
                 mk_edit(kEditAddAlias, false, 64);
-                if (kAddTypes[g_q.add_type] != AccountType::Codex)
+                if (ProviderUsesApiKey(kAddTypes[g_q.add_type]))
                     mk_edit(kEditAddKey, g_q.add_mask, 4096);
             }
             // 展开卡的别名/Key 输入框（vi = 可见列表序）
@@ -1544,7 +1555,7 @@ void TrayUi::CreatePageControls() {
                         st.cfg.alias.empty() ? ProviderDefaultAlias(st.cfg.type)
                                              : st.cfg.alias);
                     SetWindowTextW(mk_edit(kEditAccAlias0 + vi, false, 64), alias.c_str());
-                    if (st.cfg.type != AccountType::Codex) {
+                    if (ProviderUsesApiKey(st.cfg.type)) {
                         HWND ke = mk_edit(kEditAccKey0 + vi, g_q.IsMasked(st.cfg.id), 4096);
                         SetWindowTextW(ke, Utf8ToWide(app_->GetAccountKey(st.cfg.id)).c_str());
                     }

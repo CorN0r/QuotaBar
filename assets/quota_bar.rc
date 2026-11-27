@@ -2,8 +2,8 @@
 // 标题栏、窗口与托盘共用资源 102；源图位于 assets/branding。
 #include <winver.h>
 
-#define APP_VER_F 1,2,1,0
-#define APP_VER_S "1.2.1.0"
+#define APP_VER_F 1,3,0,0
+#define APP_VER_S "1.3.0.0"
 #define IDI_QUOTABAR 102
 
 IDI_QUOTABAR ICON "quota_bar.ico"
@@ -13,6 +13,7 @@ PVID_KIMI     RCDATA "provider\\kimi.png"
 PVID_CODEX    RCDATA "provider\\codex.png"
 PVID_GLM      RCDATA "provider\\glm.png"
 PVID_DEEPSEEK RCDATA "provider\\deepseek.png"
+PVID_ANTIGRAVITY RCDATA "provider\\antigravity.png"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION APP_VER_F

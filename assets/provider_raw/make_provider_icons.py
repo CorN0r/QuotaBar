@@ -83,9 +83,21 @@ def deepseek() -> Image.Image:
     return paste_fit(chip, whale, 0.78)
 
 
+def antigravity() -> Image.Image:
+    # Antigravity.exe 内嵌的 256px 应用图标（白色圆角方块 + 彩虹渐变拱形 A,已带透明边距）:
+    # 裁到不透明包围盒后铺满画布,与其它芯片同规格;保留其原生圆角,不再套圆角蒙版
+    im = Image.open(RAW / "antigravity-256.png").convert("RGBA")
+    bbox = im.split()[3].point(lambda v: 255 if v > 8 else 0).getbbox()
+    return im.crop(bbox).resize((SIZE, SIZE), Image.LANCZOS)
+
+
+ICONS = [("kimi", kimi), ("codex", codex), ("glm", glm), ("deepseek", deepseek),
+         ("antigravity", antigravity)]
+
+
 def main() -> None:
     OUT.mkdir(exist_ok=True)
-    for name, fn in [("kimi", kimi), ("codex", codex), ("glm", glm), ("deepseek", deepseek)]:
+    for name, fn in ICONS:
         img = fn()
         assert img.size == (SIZE, SIZE)
         img.save(OUT / f"{name}.png")
@@ -98,14 +110,14 @@ def main() -> None:
         prev.paste(light, (6, 8))
         prev.paste(dark, (SIZE + 12, 8))
         prev.save(RAW / f"final_{name}.png")
-    sheet = Image.new("RGB", (SIZE * 4 + 50, SIZE + 16), (32, 32, 36))
+    sheet = Image.new("RGB", (SIZE * len(ICONS) + 10 * (len(ICONS) + 1), SIZE + 16), (32, 32, 36))
     x = 10
-    for name in ["kimi", "codex", "glm", "deepseek"]:
+    for name, _ in ICONS:
         img = Image.open(OUT / f"{name}.png")
         sheet.paste(img, (x, 8), img)
         x += SIZE + 10
     sheet.save(RAW / "sheet_final_dark.png")
-    print("done:", [p.name for p in OUT.glob('*.png')])
+    print("done:", sorted(p.name for p in OUT.glob("*.png")))
 
 
 if __name__ == "__main__":

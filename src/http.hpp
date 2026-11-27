@@ -1,6 +1,9 @@
 // http.hpp — WinHTTP 异步 HTTPS 客户端。
 // 设计（§4/§9.2）：异步不阻塞 UI；单请求总生命周期 10s（内部定时器强制）；
 // 响应解压后 ≤64KiB；禁用自动重定向；证书校验保持开启；代理遵循系统配置。
+// 2026-11-27 起支持 POST+JSON 体与自定义认证头名（Antigravity 本机 hub 的 Connect RPC）；
+// 回环地址（127.0.0.1）WinHTTP 天生不经代理——会话级指向假代理的对照实验已证实
+// （experiments/ag_probe/README.md），无需按请求覆盖代理。
 #pragma once
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -20,7 +23,7 @@ namespace qb {
 
 struct ProviderRequest {
     ProviderRequestSpec spec;
-    std::string auth_header;   // "Bearer <key>"（不得写入日志）
+    std::string auth_header;   // 认证头值："Bearer <key>" / 裸 Key / CSRF 令牌（不得写入日志）
     std::string provider_id;   // 平台类型 id（"kimi"...；决定解析器）
     std::string account_id;    // 账户路由键（回程分派到对应账户快照）
     int64_t request_id = 0;
