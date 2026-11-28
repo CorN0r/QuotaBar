@@ -1550,6 +1550,32 @@ void TestAntigravity(T& t) {
             "ag: hub 未运行时刷新回显指引");
 }
 
+// ---------- 请求头 User-Agent 与版本资源同源 ----------
+// 2026-11-27 修:请求头此前靠从未被构建定义的 APP_VERSION 宏拼版本,实际一直是兜底值
+// QuotaBar/1.0.0——各平台访问日志里分不出版本。
+void TestUserAgent(T& t) {
+    const std::wstring ua = HttpUserAgent();
+    t.check(ua.rfind(L"QuotaBar/", 0) == 0 && ua.size() > 9,
+            "ua: 以 QuotaBar/ 开头且带版本段");
+    const std::wstring& v = ExeVersion();
+    if (v.empty()) {
+        // --selftest 的 exe 正常都带版本资源（quota_bar.rc 经 build.bat 链入）;资源缺失时
+        // 只验兜底不崩溃
+        t.check(ua == L"QuotaBar/0.0.0", "ua: 无版本资源 → 明确的 0.0.0 兜底（不冒充 1.0.0）");
+        return;
+    }
+    bool shape = true;
+    int dots = 0;
+    for (wchar_t c : v) {
+        if (c == L'.') ++dots;
+        else if (c < L'0' || c > L'9') shape = false;
+    }
+    t.check(shape && dots == 2, "ua: 版本资源读数为三段数字（取 FileVersion 前三段）");
+    // 核心断言:请求头就是 QuotaBar/ + 版本资源,代码里不另写一份版本
+    t.check(ua == L"QuotaBar/" + v, "ua: User-Agent = QuotaBar/ + exe 版本资源");
+    t.check(ua != L"QuotaBar/1.0.0", "ua: 不再是 2026-11-27 之前的硬编码兜底值 QuotaBar/1.0.0");
+}
+
 // ---------- 序列化 roundtrip（内存，不写盘） ----------
 void TestSnapshotRoundtrip(T& t) {
     ProviderSnapshot s = MakeKimiTestSnapshot(NowUnix());
@@ -2144,6 +2170,7 @@ int RunSelfTests() {
     TestCodexParse(t);
     TestGlmParse(t);
     TestAntigravity(t);
+    TestUserAgent(t);
     TestJsonBounds(t);
     TestMoney(t);
     TestDisplayModel(t);

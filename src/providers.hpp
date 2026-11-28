@@ -43,8 +43,10 @@ inline constexpr const char* kAntigravityContract = "antigravity-quota-summary@2
 struct ProviderRequestSpec {
     std::string provider_id;
     std::string url;              // https（本机 hub 类为 http://127.0.0.1）
-    std::string user_agent;       // QuotaBar/<version>
-    std::string account_id;       // Codex 专用:ChatGPT-Account-Id 头(由调度器填充)
+    // 不含 User-Agent:它是 WinHTTP 会话级的,见 http.hpp 的 HttpUserAgent()。此处原有
+    // user_agent / account_id 两个字段——前者五家 Build* 都在赋值、后者无人赋值,而 HTTP 层
+    // 对二者从不读取:设置后毫无效果也不报错（2026-11-27 删除;ChatGPT 账户 id 实际经
+    // ProviderRequest::extra_headers 发送）
     bool auth_bearer = true;      // true="Bearer <key>";GLM 端点要求裸 Key,置 false
     // 方法/体/认证头名（默认值 = 旧行为:GET、无体、Authorization 头）。Antigravity hub:
     // POST {} + 头 x-codeium-csrf-token（见 BuildAntigravityRequest）

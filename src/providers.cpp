@@ -7,39 +7,29 @@
 
 namespace qb {
 
-#ifndef APP_VERSION
-#define APP_VERSION L"1.0.0"
-#endif
-static std::string UserAgent() {
-    return "QuotaBar/" + WideToUtf8(APP_VERSION);
-}
-
 ProviderRequestSpec BuildKimiRequest(const std::string&) {
     ProviderRequestSpec r;
     r.provider_id = kProviderKimi;
     r.url = "https://api.kimi.com/coding/v1/usages";
-    r.user_agent = UserAgent();
     return r;
 }
 ProviderRequestSpec BuildDeepSeekRequest(const std::string&) {
     ProviderRequestSpec r;
     r.provider_id = kProviderDeepSeek;
     r.url = "https://api.deepseek.com/user/balance";
-    r.user_agent = UserAgent();
     return r;
 }
 ProviderRequestSpec BuildCodexRequest(const std::string&) {
     ProviderRequestSpec r;
     r.provider_id = kProviderCodex;
     r.url = "https://chatgpt.com/backend-api/wham/usage";
-    r.user_agent = UserAgent();
-    return r; // account_id 由调度器从宿主 GetAccountId 填充
+    // ChatGPT-Account-Id 头由调度器经 ProviderRequest::extra_headers 附加（宿主 GetAccountId）
+    return r;
 }
 ProviderRequestSpec BuildGlmRequest(const std::string&) {
     ProviderRequestSpec r;
     r.provider_id = kProviderGlm;
     r.url = "https://open.bigmodel.cn/api/monitor/usage/quota/limit";
-    r.user_agent = UserAgent();
     r.auth_bearer = false; // 监控端点要求 Authorization: <key>（无 Bearer 前缀）
     return r;
 }
@@ -49,10 +39,11 @@ ProviderRequestSpec BuildAntigravityRequest(const std::string& local_base) {
     // 基址 = 现场解析的本机 hub（httpPort 每次启动都变）+ 固定 RPC 路径。走明文回环
     // httpPort：hub 另有自签证书的 httpsPort,回环明文已足够,不为它开证书校验口子。
     r.url = local_base + "/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
-    r.user_agent = UserAgent();
     r.auth_bearer = false;                    // 密钥即 CSRF 令牌本体
     r.method = "POST";
-    r.body = "{}";                            // Connect RPC 空消息体（hub 拒绝空 body 的 POST）
+    // 请求体照官方插件的约定发空 JSON 对象（实测请求体不是合法 JSON 时 hub 回 400;
+    // 空 body 未测过,不冒险）
+    r.body = "{}";
     r.auth_header = "x-codeium-csrf-token";   // 令牌不走 Authorization
     return r;
 }

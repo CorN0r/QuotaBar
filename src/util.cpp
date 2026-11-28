@@ -2,8 +2,12 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <random>
 #include <cstring>
+#include <vector>
+
+#pragma comment(lib, "version.lib") // ExeVersion：GetFileVersionInfo / VerQueryValue
 
 namespace qb {
 
@@ -375,6 +379,47 @@ std::string Fnv1a64Hex(std::string_view s) {
         h >>= 4;
     }
     return out;
+}
+
+// ---------- 版本资源 ----------
+// exe 的 FileVersion 取前三段："1.3.0.0" → "1.3.0"。此前这份读数只在 UI 层（侧栏页脚），
+// 而 HTTP 层另靠 APP_VERSION 宏拼请求头——该宏从未被任何构建脚本定义，请求头一直是兜底值
+// QuotaBar/1.0.0。现在读数下沉到这里，两处同源。
+const std::wstring& ExeVersion() {
+    static const std::wstring cached = []() -> std::wstring {
+        wchar_t path[MAX_PATH]{};
+        const DWORD n = GetModuleFileNameW(nullptr, path, MAX_PATH);
+        if (!n || n >= MAX_PATH) return {}; // 路径被截断：缓冲区不保证以 0 结尾
+        DWORD handle = 0;
+        const DWORD sz = GetFileVersionInfoSizeW(path, &handle);
+        if (!sz) return {};
+        std::vector<BYTE> buf(sz);
+        if (!GetFileVersionInfoW(path, 0, sz, buf.data())) return {};
+        // 语言/码页表 → 定位 StringFileInfo（quota_bar.rc 里只有 0804 04b0 一组）
+        struct LangCodePage { WORD lang, code; };
+        LangCodePage* tl = nullptr;
+        UINT tln = 0;
+        if (!VerQueryValueW(buf.data(), L"\\VarFileInfo\\Translation", (void**)&tl, &tln) ||
+            !tl || tln < (UINT)sizeof(LangCodePage))
+            return {};
+        wchar_t sub[80];
+        swprintf_s(sub, L"\\StringFileInfo\\%04x%04x\\FileVersion", tl[0].lang, tl[0].code);
+        wchar_t* ver = nullptr;
+        UINT vn = 0;
+        if (!VerQueryValueW(buf.data(), sub, (void**)&ver, &vn) || !ver) return {};
+        const std::wstring s(ver);
+        std::wstring out;
+        size_t pos = 0;
+        for (int parts = 0; parts < 3 && pos <= s.size(); ++parts) {
+            const size_t dot = s.find(L'.', pos);
+            if (parts) out += L'.';
+            out += s.substr(pos, dot == std::wstring::npos ? std::wstring::npos : dot - pos);
+            if (dot == std::wstring::npos) break;
+            pos = dot + 1;
+        }
+        return out;
+    }();
+    return cached;
 }
 
 } // namespace qb

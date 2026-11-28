@@ -12,11 +12,12 @@
 
 namespace qb {
 
-#ifndef APP_VERSION
-#define APP_VERSION L"1.0.0"
-#endif
-static std::wstring UserAgentW() {
-    return L"QuotaBar/" + std::wstring(APP_VERSION);
+// 请求头 User-Agent = "QuotaBar/" + exe 版本资源。2026-11-27 前这里靠 APP_VERSION 宏拼版本,
+// 而该宏从未被任何构建脚本定义（build.bat / CMakeLists 都没有）,实际发出去的一直是兜底值
+// QuotaBar/1.0.0——各平台访问日志里分不出版本。现在与侧栏页脚同读 util::ExeVersion。
+std::wstring HttpUserAgent() {
+    const std::wstring& v = ExeVersion();
+    return v.empty() ? std::wstring(L"QuotaBar/0.0.0") : L"QuotaBar/" + v;
 }
 
 // 响应正文上限（解压后）
@@ -150,11 +151,11 @@ bool HttpClient::Init(HWND notify_wnd, UINT msg, DoneFn on_done) {
     impl_->msg = msg;
     impl_->on_done = std::move(on_done);
 
-    impl_->session = WinHttpOpen(UserAgentW().c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
+    impl_->session = WinHttpOpen(HttpUserAgent().c_str(), WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
                                  WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS,
                                  WINHTTP_FLAG_ASYNC);
     if (!impl_->session) {
-        impl_->session = WinHttpOpen(UserAgentW().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+        impl_->session = WinHttpOpen(HttpUserAgent().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
                                      WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS,
                                      WINHTTP_FLAG_ASYNC);
     }
