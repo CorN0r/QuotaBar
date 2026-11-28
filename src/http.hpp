@@ -73,4 +73,8 @@ private:
 // 返回 nullptr 表示不是安全失败码。buf 由调用方提供（≥64 字节）。
 const char* SecureFailureText(DWORD error_code, char* buf, size_t cap);
 
+// WinHTTP 会话的 User-Agent："QuotaBar/<exe 版本>"。版本读 exe 的版本资源（util::ExeVersion,
+// 与侧栏页脚同源——版本号的唯一来源是 assets/quota_bar.rc）;无版本资源时退回 QuotaBar/0.0.0。
+std::wstring HttpUserAgent();
+
 } // namespace qb

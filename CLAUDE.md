@@ -8,7 +8,7 @@ QuotaBar:Windows 11 x64 单进程额度常驻显示小工具（多账户卡片�
 
 ```bat
 build.bat                                    :: 主构建(需 VS2022 BuildTools 的 MSVC,无 CMake 也可)
-D:\Zcode\QuotaBar\build\QuotaBar.exe --selftest   :: 合成自测(339 项,不访问网络、不读写数据目录)
+D:\Zcode\QuotaBar\build\QuotaBar.exe --selftest   :: 合成自测(343 项,不访问网络、不读写数据目录)
 :: 结果:退出码 0=全过;结果追加写 build\selftest.txt(仅真实控制台才打印到屏幕)——文件是 APPEND 语义
 cmake -B build-cmake -G "Visual Studio 17 2022" -A x64   :: 备选构建
 ```
@@ -37,7 +37,7 @@ scheduler(定时器/退避/频率限制) ──→ http_client(WinHTTP 异步) �
 | --- | --- |
 | `app` | 实现 `ISchedulerHost`;隐藏窗口**必须**是顶层窗口(接收 Shell 广播;HWND_MESSAGE 不接收);单实例用命名互斥 + **EnumWindows 按类名查找**隐藏窗(`FindWindow` 对隐藏窗不可靠);系统事件(锁屏/休眠/全屏 WinEvent/网络 NetlistMgr/Explorer 重启/主题/DPI)在此订阅 |
 | `scheduler` | 所有请求唯一入口；**按账户调度**（`std::vector<ProviderSched>` 经 `SyncAccounts` 与 `cfg.accounts` 惰性同步；请求/响应按 `account_id` 路由、按 `provider_id`（平台类型）选解析器）；合并单定时器;退避 5/10/20/30min + 10% 抖动;429 遵守 Retry-After;401/403/404 停机等待用户;停用(`enabled=false`)账户不调度;暂停/锁屏不查询;恢复后 5–15s 随机延迟补查。**本机 hub 类（antigravity,`ProviderOps::local_hub`）永不停机**:缺源（hub 未运行）/401（hub 重启换了 CSRF 令牌）/连接被拒/坏响应一律 `kHubReprobeSec=60s` 短周期重探,不走通用退避（hub 随 Antigravity 启停,5→30 分钟退避会让刚启动它的用户等半小时）;缺源时快照转 Unconfigured（UI 文案「未运行」,暂停态保留「已暂停」）且**只在状态切换时记一条日志**（每次重探都记就是刷屏）;hub 随时可能出现,所以这类账户恒视为已配置、始终进调度;手动刷新在缺源时返回 `ManualKick::SourceOffline`（回显「Antigravity 未运行」,不谎报已开始刷新） |
-| `http_client` | 单请求总期限 10s(定时器强制);响应 ≤64 KiB;禁自动重定向;证书校验开启;取消后必须等待 HandleClosing 清理。**WinHTTP 异步读必须用标准模式**:Query 只做推动、读只在 DATA_AVAILABLE 事件里做一次、结束只在 avail==0 单点判定——READ_COMPLETE 内"Query+立即 Read"双路驱动会交错致大响应截断(实测 codex cl=1226 只收 1016-1026B)。请求头带 `Accept-Encoding: identity`(暂不支持自动解压)。2026-11-27 起支持 **POST+JSON 体**（`ProviderRequestSpec::method/body`:非空体随请求发送并补 `Content-Type: application/json`,体副本存进 Ctx 以活过异步发送期）与**认证头名可配置**（`auth_header`,默认 Authorization;antigravity 用 `x-codeium-csrf-token`;`auth_header` 值为空则整个认证头不发）。**回环地址 WinHTTP 天生不经代理**——会话级指向假代理的对照实验证实（`experiments/ag_probe/winhttp_loopback_proxy_test.ps1`）,hub 请求无需按请求覆盖代理（AUTOMATIC_PROXY 会话上 `WINHTTP_OPTION_PROXY` 本也不可设,12011） |
+| `http_client` | 单请求总期限 10s(定时器强制);响应 ≤64 KiB;禁自动重定向;证书校验开启;取消后必须等待 HandleClosing 清理。**WinHTTP 异步读必须用标准模式**:Query 只做推动、读只在 DATA_AVAILABLE 事件里做一次、结束只在 avail==0 单点判定——READ_COMPLETE 内"Query+立即 Read"双路驱动会交错致大响应截断(实测 codex cl=1226 只收 1016-1026B)。请求头带 `Accept-Encoding: identity`(暂不支持自动解压)。2026-11-27 起支持 **POST+JSON 体**（`ProviderRequestSpec::method/body`:非空体随请求发送并补 `Content-Type: application/json`,体副本存进 Ctx 以活过异步发送期）与**认证头名可配置**（`auth_header`,默认 Authorization;antigravity 用 `x-codeium-csrf-token`;`auth_header` 值为空则整个认证头不发）。**回环地址 WinHTTP 天生不经代理**——会话级指向假代理的对照实验证实（`experiments/ag_probe/winhttp_loopback_proxy_test.ps1`）,hub 请求无需按请求覆盖代理（AUTOMATIC_PROXY 会话上 `WINHTTP_OPTION_PROXY` 本也不可设,12011）。**User-Agent = `HttpUserAgent()`**（= `QuotaBar/` + exe 版本资源,与侧栏页脚同读 `util::ExeVersion`）——**版本号的唯一来源是 `assets/quota_bar.rc`,代码里不要再写版本字面量**:2026-11-27 前这里靠 `APP_VERSION` 宏拼请求头,而 build.bat / CMakeLists 都从未定义过它,实际发出去的一直是兜底值 `QuotaBar/1.0.0`（功能无影响,但各平台访问日志里分不出版本）。`ProviderRequestSpec` 里原有的 `user_agent`/`account_id` 是死字段（Build* 赋了值、HTTP 层从不读）,已删——**给请求规格加字段必须同时在 `HttpClient::Start` 组头,否则设置后毫无效果也不报错** |
 | `providers` | 五个静态适配器(Kimi/DeepSeek/**Codex**/**GLM**/**Antigravity**);**`ProviderOps` 分派表(2026-09-18)是"类型→平台行为"唯一真值**(id/契约/徽章/控制台/默认别名/用Key/build/parse 八元组一行一平台;`ProviderOpsOf`按类型、`ProviderOpsById`按id 查表;scheduler 组请求/选解析器/写契约与 providers 五个辅助函数全部查表,**新增 provider=表加一行+各层一处 case**,勿再恢复 if-chain);`kKimiContract = kimi-usages@86f1364`(锁定 kimi-cli 提交),字段漂移时升级契约版本并重新验证。**Kimi 的 limit/used/remaining 是 JSON 字符串数字,必须走 CountField 兼容**(IsNumber 会静默丢窗);`kCodexContract = codex-wham@2026-09-05`(实测锁定):wham/usage 仅百分比+重置时间(无绝对数),窗口标签"5h余/7d余"(用户拍板:7d 与 5h 同构);`kGlmContract = glm-quota-limit@2026-09-12`(探针真机锁定,样本 `experiments/glm_probe/glm_response.json`):智谱 `open.bigmodel.cn/api/monitor/usage/quota/limit`,**Authorization 头不带 Bearer 前缀**(`ProviderRequestSpec::auth_bearer=false` 调度器据此组头),信封 `{code,msg,data,success}`,limits[] 按 `type` 分派——**CREDIT_LIMIT(现网形态)**=绝对点数 usage/currentValue/remaining + `unit`/`number` 窗口时长(实测 (3,5)=5h、(6,1)=周,重置时刻互证;未知组合→"未知周期"仅进详情)+毫秒 `nextResetTime`(ExtractResetTime 自动降为秒);TOKENS_LIMIT/TIME_LIMIT(旧社区形态)保留兼容;percentage 字段是**已用**%但不单独采用,百分比一律走 ComputePercent 计数口径。`kAntigravityContract = antigravity-quota-summary@2026-11-27`(真机锁定,样本 `experiments/ag_probe/ag_response.json`):**查的是本机 Antigravity hub 的 Connect RPC**——`POST http://127.0.0.1:<httpPort>/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary`,头 `x-codeium-csrf-token`,体 `{}`;**不是 Google 端点**,OAuth 由 hub 代劳,QuotaBar 全程不接触令牌。基址端口随 hub 重启变化:经 `build_request(local_base)` 的入参现场传入（宿主 `ISchedulerHost::GetEndpointBase`;其余 provider 忽略该参数）。响应 `{response:{groups[{buckets[{bucketId,window,remainingFraction,resetTime?}]}]}}` 按 bucketId 分派——gemini-5h→`ag_5h`、gemini-weekly→`ag_week`（Gemini 池:常驻条/圆环/卡片主窗）、3p-5h→`ag_3p_5h`、3p-weekly→`ag_3p_week`（Claude&GPT 池:仅详情注解）,其余桶→`ag_other_N`（按 window 归周期,不猜语义,注解里列出）。三点与直觉相反:**组内 weekly 排在 5h 之前,不可按数组序**;没动过的桶（剩余 1.0）**没有 resetTime**;额度耗尽时 remainingFraction 是 proto3 零值被**整个字段省略**（以 disabled 或未过期 resetTime 佐证为 0%,二者皆无=无数据跳过）。信封兼容顶层 groups / 顶层 buckets。另有两个判定函数也在此层:`ProviderSingleCard`（无 Key 类凭证源全机唯一,只能一张卡）与 `ProviderAlertCapable`（比例窗口类 Kimi/GLM/Antigravity 参与阈值预警;codex 历史上不参与,勿顺手"补全"）——卡片阈值行、条上低额变色、阈值通知、添加面板共用 |
 | `state` | 快照 + 新鲜度 + 显示模型;**账户列表输入**（2026-09-14 起）:`AccountView{cfg,snap}` 向量进 `BuildDisplayModel/BuildEmbedItems/BuildRingItems/BuildDetailCards`,每账户一行/一环/一卡,**首段恒为「别名 」前缀段**（嵌入条按此拆名称行/值行）;调用方决定集合——常驻条/圆环/托盘提示传 `enabled` 账户,详情页传 `card_visible` 账户;别名:显示层按 `kimi_weekly` 精确 key 和 `kimi_rolling_...s` 前缀匹配滚动窗口;详情各窗口行尾用 `reset_part` 显示"到期：还有 X(绝对时间)"倒计时,粒度按窗口时长(≤24h→分钟,否则小时;`FormatRemainingZh`);**圆环模式**(Rings,2026-09-12):`BuildRingItems` 产环条目(环弧=5h 剩余比例/环心=数值/徽章=别名首字符+类型品牌色),配色自包含固定亮色(overlay 垫半透明深色圆盘,不随壁纸/主题反转),定位沿用吸附锚定(见 overlay 2026-09-21);环心文字必须 MeasureString 后按点绘制——矩形排布在宽度临界时丢末字符("¥22"→"¥2" 实测);**横幅直绘屏幕 DC 会闪烁**:30fps 下"填背景→画粒子→画标题"分步执行,DWM 中途合成采样到半成品帧,表现为标题区持续闪烁——必须双缓冲(整帧绘入内存位图,一次 BitBlt 上屏,详情窗 PaintDetail 实测修复);**被遮挡窗口显示后必须补一次 InvalidateRect**(遮挡期间首帧会被 DWM 丢弃,实测空窗);`BuildDetailText` 已随「复制全部」删除（2026-09-14）,文本断言基线改用 `BuildDetailCards` |
 | `taskbar_slot` | 嵌入槽(display.mode=Embed):顶层 WS_POPUP 创建后 SetParent;D2D+DComposition 合成交换链;嵌入布局默认两行(名称行大字/值行 0.8×,列宽=max(名,值),列距 kColGapDip;`embed_show_names=false` 时单行只渲染值行,窗口高减半);锚定链 ①贴天气估算右缘(kWeatherWidthDip=115,用户实机 25℃ 组件实测 98DIP + 变长缓冲)②簇右缘 ③托盘;**软界自适应**:内容超常规 30DIP 留白时放宽到 4DIP(kMinPadDip);`slot_offset_x_dip` 用户水平偏移(±200 钳制,显示设置页滑杆实时微调)。**锚定/偏移/软界的次序(2026-09-12 踩坑)**:可用宽必须按"偏移后的实际 x0"到两道界的距离判定——先应用 slot_offset 再判常规界/软界;若按旧写法先判宽再算 `avail=right_lim(常规界)-x0`,用户一旦设过偏移(实测 32DIP)软界放宽就被整行吞掉,可用宽虚减 26DIP,四平台内容超界 → 列挤压 → `TruncateSlotSegs` 从尾部丢段(表现:"周"额度消失)。锚定链封装为两遍执行:字号收缩后内容变窄,第二遍复评常能进软界。仍放不下才列挤压+尾段截断兜底 |
@@ -422,8 +422,8 @@ R8-2 实证生效）；发行 zip 产物完整。
   凭证行文案抽成 `LocalCredentialStatus(type, ready, compact)`,安全说明行随类型。
 - **顺手修的既有布局问题**（无 Key 卡展开区,原只有 Codex 会走到,从未被仔细看过）:
   「重新读取」按钮原摆在 `ex_key.right` 之外 = 伸出卡片右缘 ~50 DIP（按旧布局矩形推算:
-  左列卡的部分被右邻卡盖住、右列卡的部分被窗口右缘裁掉;**没有旧版截图对照,发版时
-  展开态的新布局也尚未做可视验证,只过了布局用例**）,现右对齐收进卡内,状态框收窄让位、
+  左列卡的部分被右邻卡盖住、右列卡的部分被窗口右缘裁掉;**没有旧版截图对照**;新布局在
+  v1.3.0 发布后经维护者实机确认无问题）,现右对齐收进卡内,状态框收窄让位、
   文案分完整/紧凑两档;
   类型章改为"放得下才整章画"——旧阈值 4 DIP 只够剩一个字,标题行一有状态 chip 就画出
   「周…」「本」这类残章（antigravity 标题长,第一眼就是残章）。
@@ -434,4 +434,22 @@ R8-2 实证生效）；发行 zip 产物完整。
   而断言没做长度守卫直接越界 → selftest 段错误;**失败路径上的下标访问一律先验长度**。
 - **真机联调结论**:隔离 profile + 真 hub,生产 WinHTTP 路径 200 → 卡片 5h/7d 环、趋势带、
   历史落盘、手动刷新全通;残留描述文件被正确忽略;真实实例上用户经「添加卡片」建卡即查成功。
-  未能可视验证的只剩展开态卡片的最终观感（联调时工位锁屏,见探针 README）。
+  展开态卡片联调时因工位锁屏未能可视验证,由维护者在 v1.3.0 发布后实机确认。
+
+## 2026-11-27（二）请求头 User-Agent 修正（339→343 项自测全绿）
+
+v1.3.0 发版后跟进的小修,不单独发版:
+
+- **问题**:请求头 `User-Agent` 恒为 `QuotaBar/1.0.0`。`http.cpp`/`providers.cpp` 各有一份
+  `#ifndef APP_VERSION → L"1.0.0"` 兜底宏,而 build.bat / CMakeLists 从未定义过它。
+- **修法**:读 exe 版本资源的逻辑原在 UI 层（`AppVersionText`,侧栏页脚）,下沉为
+  `util::ExeVersion()`（FileVersion 前三段;无版本资源 → 空串;`version.lib` 的 pragma 随之
+  挪到 util.cpp）。`http.cpp` 的 `HttpUserAgent()` = `QuotaBar/` + 它（无资源退回
+  `QuotaBar/0.0.0`）,侧栏只负责加 `v` 前缀。单一来源仍是 `.rc`,两处不可能再漂移。
+- **同时删掉 `ProviderRequestSpec` 的两个死字段**:`user_agent`（五家 Build* 都在赋值,
+  但 `HttpClient::Start` 组头时从不读它）与 `account_id`（无人赋值;ChatGPT 账户 id 实际
+  经 `ProviderRequest::extra_headers` 发送,且与外层真正用于路由的 `account_id` 重名）。
+- **验证**:四条新自测（请求头 = `QuotaBar/` + 版本资源、三段数字、不再是 1.0.0、无资源兜底）;
+  四家远端用旧值/新值各做一次**无凭证**对照请求,结果逐家一致（都不按请求头版本区别对待）。
+- **用二进制字面量扫描验证"旧字符串已消失"不可靠**:链接器会合并字符串,且自测用例的名字/
+  旧值断言本身就把 `QuotaBar/1.0.0` 带进 exe。要确认只能回到源码层面 grep。

@@ -81,4 +81,10 @@ std::string I64(int64_t v);
 // 的持久标识）；空输入 → 空输出（调用方以"非空"为"存在可锚定身份"的判据）。
 std::string Fnv1a64Hex(std::string_view s);
 
+// ---------- 版本资源 ----------
+// exe 版本资源 FileVersion 的前三段（"1.3.0"）。assets/quota_bar.rc 是版本号的唯一来源：
+// 侧栏页脚与 HTTP 请求头 User-Agent 都读这里,代码里不要再写版本字面量。
+// 读不到（exe 无版本资源）→ 空串,兜底文案由调用方决定。进程内缓存。
+const std::wstring& ExeVersion();
+
 } // namespace qb

@@ -16,7 +16,6 @@
 
 #pragma comment(lib, "shcore.lib")
 #pragma comment(lib, "gdiplus.lib")
-#pragma comment(lib, "version.lib")
 
 namespace qb {
 
@@ -425,52 +424,13 @@ const wchar_t* TypeTag(wchar_t badge) {
     return ProviderOpsByBadge(badge).type_tag;
 }
 
-// 侧栏页脚版本号：读 exe 版本资源（assets/quota_bar.rc 为单一来源；失败回退 v1.0）
+// 侧栏页脚版本号：读 exe 版本资源（assets/quota_bar.rc 为单一来源；失败回退 v1.0）。
+// 读数实现在 util::ExeVersion（HTTP 请求头 User-Agent 同源），这里只加 "v" 前缀。
 std::wstring AppVersionText() {
-    static std::wstring cached;
-    static bool tried = false;
-    if (tried) return cached;
-    tried = true;
-    wchar_t path[MAX_PATH]{};
-    if (GetModuleFileNameW(nullptr, path, MAX_PATH)) {
-        DWORD handle = 0;
-        DWORD sz = GetFileVersionInfoSizeW(path, &handle);
-        if (sz > 0) {
-            std::vector<BYTE> buf(sz);
-            if (GetFileVersionInfoW(path, 0, sz, buf.data())) {
-                struct LangCodePage { WORD lang, code; }* tl = nullptr;
-                UINT tln = 0;
-                if (VerQueryValueW(buf.data(), L"\\VarFileInfo\\Translation",
-                                   (void**)&tl, &tln) &&
-                    tl && tln >= sizeof(LangCodePage)) {
-                    wchar_t sub[72];
-                    swprintf_s(sub, L"\\StringFileInfo\\%04x%04x\\FileVersion",
-                               tl[0].lang, tl[0].code);
-                    wchar_t* ver = nullptr;
-                    UINT vn = 0;
-                    if (VerQueryValueW(buf.data(), sub, (void**)&ver, &vn) && ver) {
-                        // "1.1.0.0" → "v1.1.0"（取前三段）
-                        std::wstring s(ver);
-                        std::wstring out = L"v";
-                        int parts = 0;
-                        size_t pos = 0;
-                        while (parts < 3) {
-                            size_t dot = s.find(L'.', pos);
-                            out += s.substr(pos, dot == std::wstring::npos
-                                                    ? std::wstring::npos
-                                                    : dot - pos);
-                            ++parts;
-                            if (dot == std::wstring::npos || parts == 3) break;
-                            out += L'.';
-                            pos = dot + 1;
-                        }
-                        cached = out;
-                    }
-                }
-            }
-        }
-    }
-    if (cached.empty()) cached = L"v1.0";
+    static const std::wstring cached = [] {
+        const std::wstring& v = ExeVersion();
+        return v.empty() ? std::wstring(L"v1.0") : L"v" + v;
+    }();
     return cached;
 }
 

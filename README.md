@@ -11,7 +11,7 @@ Kimi Code · Codex · GLM Coding Plan · DeepSeek · Antigravity —— 余额�
 [![Release](https://img.shields.io/github/v/release/CorN0r/QuotaBar?color=4C7EF9&label=%E6%9C%80%E6%96%B0%E7%89%88)](https://github.com/CorN0r/QuotaBar/releases/latest)
 ![平台](https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-0078D4)
 ![许可](https://img.shields.io/badge/%E8%AE%B8%E5%8F%AF%E8%AF%81-MIT-green)
-![自测](https://img.shields.io/badge/%E8%87%AA%E6%B5%8B-339%20%E9%A1%B9-brightgreen)
+![自测](https://img.shields.io/badge/%E8%87%AA%E6%B5%8B-343%20%E9%A1%B9-brightgreen)
 
 **[⬇ 下载最新版](https://github.com/CorN0r/QuotaBar/releases/latest)**
 
@@ -46,14 +46,14 @@ Kimi Code · Codex · GLM Coding Plan · DeepSeek · Antigravity —— 余额�
 2. 首次运行自动打开主窗口 —— 点「**添加卡片**」粘贴对应平台的 API Key 即建卡即查询；**Codex 免密**：先用 [Codex CLI](https://github.com/openai/codex) 登录一次即可；**Antigravity 免密**：启动 Antigravity 并登录 Google 账户即可，卡片经它的本机服务只读查询（Antigravity 未运行时显示「未运行」，启动后约一分钟内自动连接）。
 3. 托盘左键开关主窗口，右键：立即刷新 / 显示设置 / 暂停查询 / 退出。
 
-自检：`QuotaBar.exe --selftest`（339 项合成自测，不访问网络、不读写任何数据）。
+自检：`QuotaBar.exe --selftest`（343 项合成自测，不访问网络、不读写任何数据）。
 
 ## 🛠 从源码构建
 
 ```bat
 build.bat                                              :: MSVC（VS2022 BuildTools），产出 build\QuotaBar.exe
 cmake -B build-cmake -G "Visual Studio 17 2022" -A x64 :: 备选：CMake
-python tools\make_release.py                           :: 构建 + 339 项自测门禁 + 打包 dist\QuotaBar-vX.Y.Z-x64.zip
+python tools\make_release.py                           :: 构建 + 343 项自测门禁 + 打包 dist\QuotaBar-vX.Y.Z-x64.zip
 ```
 
 > 源码均为 UTF-8；`build.bat` 须保持 GBK + CRLF（cmd 兼容），勿转码。
